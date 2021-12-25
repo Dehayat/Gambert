@@ -360,8 +360,9 @@ GameObject:
   - component: {fileID: 951047237}
   - component: {fileID: 951047236}
   - component: {fileID: 951047238}
-  - component: {fileID: 951047240}
   - component: {fileID: 951047239}
+  - component: {fileID: 951047241}
+  - component: {fileID: 951047240}
   m_Layer: 0
   m_Name: HeroGambert
   m_TagString: Untagged
@@ -457,6 +458,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   runSpeed: 10
+--- !u!114 &951047241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 951047235}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f398b18f8624cb428574bbcd666aa2f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isLookingRight: 1
+  isIdle: 1
+  isRunning: 0
+  isJumping: 0
+  isFalling: 0
+  isAirborne: 0
+  isGrounded: 0
+  isAttacking: 0
+  isDashing: 0
+  moveDirection: 0
 --- !u!1 &1140650328
 GameObject:
   m_ObjectHideFlags: 0
