@@ -71,7 +71,7 @@ public class Player : MonoBehaviour
         wantToDash = true;
     }
 
-    private bool wantToAttack = false;
+    public bool wantToAttack = false;
     private void Attack_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
     {
         wantToAttack = true;
