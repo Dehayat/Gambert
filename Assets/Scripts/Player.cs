@@ -12,7 +12,9 @@ public class Player : MonoBehaviour
     public float dashSpeed = 15f;
     public float dashLength = 0.3f;
     public float dashCoolDown = 0.2f;
+    public float preAttackLength = 0.1f;
     public float attackLength = 0.1f;
+    public float postAttackLength = 0.1f;
     public GameObject attackPrefab = null;
     public float attackCoolDown = 0.1f;
     public LayerMask groundLayer = 1;
@@ -20,15 +22,18 @@ public class Player : MonoBehaviour
     public float dashBufferInputLength = 0.1f;
     public float jumpBufferInputLength = 0.2f;
     public float maxFallSpeed = 20f;
+    public float jumpForgiveLength = 0.06f;
 
     private Rigidbody2D rb;
     private BoxCollider2D boxCol;
     private GPlayerInputActions input;
+    private Animator anim;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         boxCol = GetComponent<BoxCollider2D>();
+        anim = GetComponent<Animator>();
         input = new GPlayerInputActions();
         input.Enable();
     }
@@ -115,6 +120,12 @@ public class Player : MonoBehaviour
     private float dashBufferedTimer = 0f;
     private float jumpBufferedTimer = 0f;
     private bool endNextJumpOnMin = false;
+    private bool isRunning = false;
+    private bool isIdle = false;
+    private bool isFalling = false;
+    private float jumpForgiveTimer = 0f;
+    private bool preAttackDone = false;
+    private bool attackDone = false;
 
     private void FixedUpdate()
     {
@@ -128,6 +139,11 @@ public class Player : MonoBehaviour
             rb.gravityScale = 0f;
             dashDir = lookDir;
             dashBufferedTimer = 0;
+            anim.Play("Dash");
+            if (isRunning)
+            {
+                isRunning = false;
+            }
             if (isJumping)
             {
                 isJumping = false;
@@ -164,10 +180,12 @@ public class Player : MonoBehaviour
         //Attack
         if ((wantToAttack || attackBufferedTimer > Mathf.Epsilon) && !isAttacking && !isDashing && attackCoolDownTimer <= Mathf.Epsilon)
         {
-            attackPrefab.SetActive(true);
+            anim.Play("Attack");
             isAttacking = true;
             attackTimer = 0f;
             attackBufferedTimer = 0;
+            preAttackDone = false;
+            attackDone = false;
         }
         else if (wantToAttack)
         {
@@ -175,15 +193,44 @@ public class Player : MonoBehaviour
         }
         if (isAttacking)
         {
-            if (attackTimer < attackLength)
+            if (attackTimer < preAttackLength + attackLength + postAttackLength)
             {
                 attackTimer += Time.fixedDeltaTime;
+            }
+
+            if (attackTimer < preAttackLength)
+            {
+
+            }
+            else if (attackTimer >= preAttackLength && attackTimer < preAttackLength + attackLength)
+            {
+                if (!preAttackDone)
+                {
+                    preAttackDone = true;
+                    attackPrefab.SetActive(true);
+                }
+            }
+            else if (attackTimer >= preAttackLength + attackLength && attackTimer < preAttackLength + attackLength + postAttackLength)
+            {
+                if (!attackDone)
+                {
+                    attackDone = true;
+                    attackPrefab.SetActive(false);
+                }
             }
             else
             {
                 attackPrefab.SetActive(false);
                 isAttacking = false;
                 attackCoolDownTimer = attackCoolDown;
+                if (isJumping)
+                {
+                    anim.Play("Jump");
+                }
+                if (isRunning)
+                {
+                    anim.Play("Walk");
+                }
             }
         }
         else
@@ -198,17 +245,22 @@ public class Player : MonoBehaviour
         {
             jumpWasUsed = false;
         }
-        if ((wantToJump || jumpBufferedTimer > Mathf.Epsilon) && !isJumping && !isDashing && !jumpWasUsed)
+        if ((isOnGround || jumpForgiveTimer > Mathf.Epsilon) && (wantToJump || jumpBufferedTimer > Mathf.Epsilon) && !isJumping && !isDashing && !jumpWasUsed)
         {
             if (endNextJumpOnMin)
             {
                 endNextJumpOnMin = false;
                 endJumpOnMin = true;
             }
+            anim.Play("Jump");
             isJumping = true;
             jumpWasUsed = true;
             jumpTimer = 0f;
             jumpBufferedTimer = 0f;
+            if (isRunning)
+            {
+                isRunning = false;
+            }
         }
         else if (wantToJump)
         {
@@ -249,6 +301,51 @@ public class Player : MonoBehaviour
         {
             rb.velocity = new Vector2(moveDir * moveSpeed, rb.velocity.y);
         }
+        if (!isRunning && moveDir != 0)
+        {
+            if (!isAttacking && !isJumping && isOnGround && !isDashing)
+            {
+                isRunning = true;
+                anim.Play("Walk");
+            }
+        }
+        else if (moveDir == 0)
+        {
+            isRunning = false;
+        }
+        if (!isRunning && !isDashing && !isAttacking && !isJumping)
+        {
+            if (isOnGround)
+            {
+                if (!isIdle)
+                {
+                    isIdle = true;
+                    anim.Play("Idle");
+                }
+            }
+            else
+            {
+                if (!isFalling)
+                {
+                    isFalling = true;
+                    anim.Play("Falling");
+                }
+            }
+        }
+        else
+        {
+            isIdle = false;
+            isFalling = false;
+        }
+        if (isFalling)
+        {
+            isIdle = false;
+        }
+        if (isOnGround)
+        {
+            isFalling = false;
+            jumpForgiveTimer = jumpForgiveLength;
+        }
         if (!isDashing && !isAttacking)
         {
             if (facingDir != lookDir)
@@ -278,6 +375,10 @@ public class Player : MonoBehaviour
             {
                 endNextJumpOnMin = false;
             }
+        }
+        if (jumpForgiveTimer > 0)
+        {
+            jumpForgiveTimer -= Time.fixedDeltaTime;
         }
         wantToJump = false;
         wantToStopJump = false;
