@@ -4,20 +4,28 @@ using UnityEngine;
 
 public class Destructable : MonoBehaviour
 {
-    public HitBox hitBox;
+    private Health health;
+
+    private void Awake()
+    {
+        health = GetComponent<Health>();
+    }
 
     private void OnEnable()
     {
-        hitBox.OnHit += HitBox_OnHit;
+        health.OnDamaged += OnDamaged;
     }
     private void OnDisable()
     {
-        hitBox.OnHit += HitBox_OnHit;
+        health.OnDamaged += OnDamaged;
     }
 
-    private void HitBox_OnHit(Collider2D other)
+    private void OnDamaged(AttackBox other)
     {
-        Destroy(gameObject);
+        if (health.currentHealth == 0)
+        {
+            Destroy(gameObject);
+        }
     }
 
 }

@@ -1,14 +1,33 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class AttackBox : MonoBehaviour
 {
-    public delegate void Hit(Collider2D other);
+    public bool hitOnce = true;
+
+    public delegate void Hit(HitBox other);
     public event Hit OnHit;
 
-    public void HitTrigger(Collider2D hitBox)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        OnHit?.Invoke(hitBox);
+        TryHit(collision);
+    }
+
+    private void TryHit(Collider2D collision)
+    {
+        HitBox target = collision.GetComponent<HitBox>();
+        if (target != null && target.canHit)
+        {
+            target.Attack(this);
+            OnHit?.Invoke(target);
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        if (hitOnce) return;
+        TryHit(collision);
     }
 }
