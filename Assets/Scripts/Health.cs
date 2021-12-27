@@ -50,7 +50,6 @@ public class Health : MonoBehaviour
         {
             SetCanHit(false);
         }
-        Debug.Log(gameObject + " Got Hit");
         OnDamaged?.Invoke(other);
     }
 
