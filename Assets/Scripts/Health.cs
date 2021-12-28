@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Health : MonoBehaviour
 {
-    public delegate void Damaged(AttackBox attacker);
+    public delegate void Damaged(AttackBox attacker, Vector2 attackDir);
     public event Damaged OnDamaged;
 
     public int currentHealth = 3;
@@ -41,7 +41,7 @@ public class Health : MonoBehaviour
         }
     }
 
-    private void Health_OnHit(AttackBox other)
+    private void Health_OnHit(AttackBox other, Vector2 attackDir)
     {
         if (!canHit) return;
         currentHealth -= 1;
@@ -50,7 +50,7 @@ public class Health : MonoBehaviour
         {
             SetCanHit(false);
         }
-        OnDamaged?.Invoke(other);
+        OnDamaged?.Invoke(other, attackDir);
     }
 
 }

@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -23,18 +20,28 @@ public class Player : MonoBehaviour
     public float jumpBufferInputLength = 0.2f;
     public float maxFallSpeed = 20f;
     public float jumpForgiveLength = 0.06f;
+    public float attackKnockBackSpeed = 30f;
+    public float attackKnockBackDuration = 0.04f;
+    public SpriteRenderer spriteRenderer;
+    public Material getHitMaterial;
+    public float invincibleDuration = 0.3f;
 
     private Rigidbody2D rb;
     private BoxCollider2D boxCol;
     private GPlayerInputActions input;
     private Animator anim;
+    private Health health;
+    private Material normalMaterial;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         boxCol = GetComponent<BoxCollider2D>();
         anim = GetComponent<Animator>();
+        health = GetComponent<Health>();
         input = new GPlayerInputActions();
+        normalMaterial = spriteRenderer.material;
+
         input.Enable();
     }
     private void OnEnable()
@@ -43,6 +50,7 @@ public class Player : MonoBehaviour
         input.Player.Jump.canceled += Jump_canceled;
         input.Player.Dash.performed += Dash_performed;
         input.Player.Attack.performed += Attack_performed;
+        health.OnDamaged += Health_OnDamaged;
     }
 
     private void OnDisable()
@@ -51,6 +59,7 @@ public class Player : MonoBehaviour
         input.Player.Jump.canceled -= Jump_canceled;
         input.Player.Dash.performed -= Dash_performed;
         input.Player.Attack.performed -= Attack_performed;
+        health.OnDamaged -= Health_OnDamaged;
     }
 
     private bool wantToStopJump = false;
@@ -75,6 +84,40 @@ public class Player : MonoBehaviour
     private void Attack_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
     {
         wantToAttack = true;
+    }
+    private float beingAttackedTimer = 0f;
+    private Vector2 knockBackDirection = Vector2.zero;
+    private float invincibleTimer = 0f;
+    private void Health_OnDamaged(AttackBox attacker, Vector2 attackDir)
+    {
+        isBeingAttacked = true;
+        beingAttackedTimer = 0f;
+        knockBackDirection = attackDir;
+        knockBackDirection.y = 0;
+        knockBackDirection.Normalize();
+        spriteRenderer.material = getHitMaterial;
+        invincibleTimer = invincibleDuration;
+        health.SetCanHit(false);
+        if (isAttacking)
+        {
+            isAttacking = false;
+            attackPrefab.SetActive(false);
+            attackCoolDownTimer = attackCoolDown;
+        }
+        if (isDashing)
+        {
+            isDashing = false;
+        }
+        else
+        {
+            savedGravity = rb.gravityScale;
+        }
+        if (isJumping)
+        {
+            isJumping = false;
+            endJumpOnMin = false;
+        }
+        rb.gravityScale = 0f;
     }
 
     private int moveDir = 0;
@@ -126,12 +169,27 @@ public class Player : MonoBehaviour
     private float jumpForgiveTimer = 0f;
     private bool preAttackDone = false;
     private bool attackDone = false;
+    private bool isBeingAttacked = false;
 
     private void FixedUpdate()
     {
         CheckIsOnGround();
+
+        //Being Attacked
+        if (isBeingAttacked)
+        {
+            rb.velocity = knockBackDirection * attackKnockBackSpeed;
+            if (beingAttackedTimer >= attackKnockBackDuration)
+            {
+                rb.velocity = Vector2.zero;
+                isBeingAttacked = false;
+                rb.gravityScale = savedGravity;
+            }
+            beingAttackedTimer += Time.fixedDeltaTime;
+        }
+
         //Dash
-        if ((wantToDash || dashBufferedTimer > Mathf.Epsilon) && !isDashing && !isAttacking && dashCoolDownTimer <= Mathf.Epsilon)
+        if ((wantToDash || dashBufferedTimer > Mathf.Epsilon) && !isBeingAttacked && !isDashing && !isAttacking && dashCoolDownTimer <= Mathf.Epsilon)
         {
             isDashing = true;
             dashTimer = 0;
@@ -147,7 +205,6 @@ public class Player : MonoBehaviour
             if (isJumping)
             {
                 isJumping = false;
-                jumpTimer = 0;
                 endJumpOnMin = false;
             }
         }
@@ -178,7 +235,7 @@ public class Player : MonoBehaviour
             }
         }
         //Attack
-        if ((wantToAttack || attackBufferedTimer > Mathf.Epsilon) && !isAttacking && !isDashing && attackCoolDownTimer <= Mathf.Epsilon)
+        if ((wantToAttack || attackBufferedTimer > Mathf.Epsilon) && !isBeingAttacked && !isAttacking && !isDashing && attackCoolDownTimer <= Mathf.Epsilon)
         {
             anim.Play("Attack");
             isAttacking = true;
@@ -245,13 +302,14 @@ public class Player : MonoBehaviour
         {
             jumpWasUsed = false;
         }
-        if ((isOnGround || jumpForgiveTimer > Mathf.Epsilon) && (wantToJump || jumpBufferedTimer > Mathf.Epsilon) && !isJumping && !isDashing && !jumpWasUsed)
+        if ((isOnGround || jumpForgiveTimer > Mathf.Epsilon) && (wantToJump || jumpBufferedTimer > Mathf.Epsilon) && !isBeingAttacked && !isJumping && !isDashing && !jumpWasUsed)
         {
             if (endNextJumpOnMin)
             {
                 endNextJumpOnMin = false;
                 endJumpOnMin = true;
             }
+            jumpForgiveTimer = 0f;
             anim.Play("Jump");
             isJumping = true;
             jumpWasUsed = true;
@@ -293,11 +351,20 @@ public class Player : MonoBehaviour
             }
         }
         //General
-        if (rb.velocity.y < -maxFallSpeed)
+        if (invincibleTimer > 0)
+        {
+            invincibleTimer -= Time.fixedDeltaTime;
+            if (invincibleTimer < Mathf.Epsilon)
+            {
+                spriteRenderer.material = normalMaterial;
+                health.SetCanHit(true);
+            }
+        }
+        if (!isDashing && !isBeingAttacked && rb.velocity.y < -maxFallSpeed)
         {
             rb.velocity = new Vector2(rb.velocity.x, -maxFallSpeed);
         }
-        if (!isDashing)
+        if (!isDashing && !isBeingAttacked)
         {
             rb.velocity = new Vector2(moveDir * moveSpeed, rb.velocity.y);
         }
@@ -313,7 +380,7 @@ public class Player : MonoBehaviour
         {
             isRunning = false;
         }
-        if (!isRunning && !isDashing && !isAttacking && !isJumping)
+        if (!isRunning && !isDashing && !isAttacking && !isJumping && !isBeingAttacked)
         {
             if (isOnGround)
             {
@@ -346,7 +413,7 @@ public class Player : MonoBehaviour
             isFalling = false;
             jumpForgiveTimer = jumpForgiveLength;
         }
-        if (!isDashing && !isAttacking)
+        if (!isDashing && !isAttacking && !isBeingAttacked)
         {
             if (facingDir != lookDir)
             {
@@ -387,12 +454,17 @@ public class Player : MonoBehaviour
     }
 
     private bool isOnGround = false;
+    private Collider2D[] collisionResult = new Collider2D[1];
     private void CheckIsOnGround()
     {
         Vector2 origin = boxCol.bounds.center + (Vector3.down * (boxCol.bounds.extents.y * 0.75f));
         Vector2 size = new Vector2(boxCol.bounds.size.x * 0.8f, boxCol.bounds.extents.y * 0.55f);
-        Collider2D colliderHit = Physics2D.OverlapBox(origin, size, 0, groundLayer);
-        if (colliderHit != null)
+        ContactFilter2D contactFilter = new ContactFilter2D();
+        contactFilter.NoFilter();
+        contactFilter.useTriggers = false;
+        contactFilter.SetLayerMask(groundLayer);
+        int collisionCount = Physics2D.OverlapBox(origin, size, 0, contactFilter, collisionResult);
+        if (collisionCount != 0)
         {
             isOnGround = true;
         }

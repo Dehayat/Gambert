@@ -10,6 +10,12 @@ public class AttackBox : MonoBehaviour
     public delegate void Hit(HitBox other);
     public event Hit OnHit;
 
+    private Collider2D attackTrigger;
+    private void Awake()
+    {
+        attackTrigger = GetComponent<Collider2D>();
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         TryHit(collision);
@@ -20,7 +26,10 @@ public class AttackBox : MonoBehaviour
         HitBox target = collision.GetComponent<HitBox>();
         if (target != null && target.canHit)
         {
-            target.Attack(this);
+            Vector2 hitBoxCenter = collision.bounds.center;
+            Vector2 attackBoxCenter = attackTrigger.bounds.center;
+            Vector2 attackDir = hitBoxCenter - attackBoxCenter;
+            target.Attack(this, attackDir.normalized);
             OnHit?.Invoke(target);
         }
     }

@@ -1076,7 +1076,7 @@ GameObject:
   - component: {fileID: 951047241}
   m_Layer: 6
   m_Name: HeroGambert
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1110,7 +1110,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 951047235}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.33, y: 1.48, z: -3.103956}
+  m_LocalPosition: {x: -6.22, y: 1.39, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1314462878}
@@ -1189,7 +1189,7 @@ MonoBehaviour:
   attackLength: 0.06
   postAttackLength: 0.08
   attackPrefab: {fileID: 1143399372}
-  attackCoolDown: 0.2
+  attackCoolDown: 0.12
   groundLayer:
     serializedVersion: 2
     m_Bits: 1
@@ -1198,6 +1198,11 @@ MonoBehaviour:
   jumpBufferInputLength: 0.14
   maxFallSpeed: 13
   jumpForgiveLength: 0.06
+  attackKnockBackSpeed: 20
+  attackKnockBackDuration: 0.06
+  spriteRenderer: {fileID: 1314462879}
+  getHitMaterial: {fileID: 2100000, guid: 83cc6d5d936aeea43813e1688703c8eb, type: 2}
+  invincibleDuration: 0.2
   wantToAttack: 0
 --- !u!114 &951047241
 MonoBehaviour:
@@ -1216,6 +1221,63 @@ MonoBehaviour:
   canHit: 1
   hitBoxes:
   - {fileID: 353151991}
+--- !u!1 &995837013
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 995837015}
+  - component: {fileID: 995837014}
+  m_Layer: 0
+  m_Name: bzArea
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!61 &995837014
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 995837013}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: -1.019377, y: 0.7877002}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 1, y: 1}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 8.042969, y: 3.9345698}
+  m_EdgeRadius: 0
+--- !u!4 &995837015
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 995837013}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.97, y: -0.61, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 9
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1050910771
 GameObject:
   m_ObjectHideFlags: 0
@@ -1791,11 +1853,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1254306477}
-  - component: {fileID: 1254306478}
   - component: {fileID: 1254306476}
   - component: {fileID: 1254306475}
   - component: {fileID: 1254306473}
   - component: {fileID: 1254306474}
+  - component: {fileID: 1254306478}
   m_Layer: 12
   m_Name: Enemybz
   m_TagString: Untagged
@@ -1815,8 +1877,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c7c5a210fb7f6f4192e8943df7a4e1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentHealth: 3
-  maxHealth: 3
+  currentHealth: 10
+  maxHealth: 10
   canHit: 1
   hitBoxes:
   - {fileID: 929674119}
@@ -1845,7 +1907,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.0066276193, y: -0.19551432}
+  m_Offset: {x: -0.0046978593, y: -0.17042845}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -1856,7 +1918,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.6216402, y: 1.0389965}
+  m_Size: {x: 0.52515614, y: 0.9888247}
   m_EdgeRadius: 0
 --- !u!50 &1254306476
 Rigidbody2D:
@@ -1887,7 +1949,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1254306472}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.22, y: -1.2, z: -3.103956}
+  m_LocalPosition: {x: 4.66, y: -0.65, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 740577975}
@@ -1905,9 +1967,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1254306472}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39cbdb73add2ea04fb3266d51d98dd50, type: 3}
+  m_Script: {fileID: 11500000, guid: 8d54954e5b2835c45b24aba0816571fb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  wanderSpeed: 2
+  wanderDirection: {x: 1, y: 0}
+  wanderArea: {fileID: 995837014}
+  recoilSpeed: 20
+  recoilDuration: 0.08
+  staggerDuration: 0.15
+  spriteRenderer: {fileID: 740577976}
+  getHitMaterial: {fileID: 2100000, guid: 83cc6d5d936aeea43813e1688703c8eb, type: 2}
+  invincibleDuration: 0.4
 --- !u!1 &1314462877
 GameObject:
   m_ObjectHideFlags: 0
