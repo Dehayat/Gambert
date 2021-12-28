@@ -123,7 +123,7 @@ public class Player : MonoBehaviour
     private int moveDir = 0;
     private void Update()
     {
-        float moveDirFloat = input.Player.Move.ReadValue<Vector2>().x;
+        float moveDirFloat = input.Player.Move.ReadValue<float>();
         if (moveDirFloat > Mathf.Epsilon)
         {
             moveDir = 1;
