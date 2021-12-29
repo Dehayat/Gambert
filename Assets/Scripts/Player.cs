@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class Player : MonoBehaviour
@@ -22,6 +23,7 @@ public class Player : MonoBehaviour
     public float jumpForgiveLength = 0.06f;
     public float attackKnockBackSpeed = 30f;
     public float attackKnockBackDuration = 0.04f;
+    public float getHitDuration = 0.1f;
     public SpriteRenderer spriteRenderer;
     public Material getHitMaterial;
     public float invincibleDuration = 0.3f;
@@ -29,6 +31,8 @@ public class Player : MonoBehaviour
     public GameObject attackDownPrefab = null;
     public float bounceSpeed = 10f;
     public float bounceDuration = 0.2f;
+    public GameObject hitEffectGO;
+    public float hitEffectDuration = 0.1f;
 
     private Rigidbody2D rb;
     private BoxCollider2D boxCol;
@@ -55,15 +59,38 @@ public class Player : MonoBehaviour
         input.Player.Dash.performed += Dash_performed;
         input.Player.Attack.performed += Attack_performed;
         health.OnDamaged += Health_OnDamaged;
-        attackDownPrefab.GetComponent<AttackBox>().OnHit += Player_OnHit;
+        attackDownPrefab.GetComponent<AttackBox>().OnHit += Player_OnHitDown;
+        attackPrefab.GetComponent<AttackBox>().OnHit += Player_OnHit;
+        attackUpPrefab.GetComponent<AttackBox>().OnHit += Player_OnHit;
     }
 
     private bool isBouncing = false;
     private float bounceTimer = 0f;
-    private void Player_OnHit(HitBox other)
+    private void Player_OnHitDown(HitInfo info)
     {
         isBouncing = true;
         bounceTimer = bounceDuration;
+        Player_OnHit(info);
+    }
+    private void Player_OnHit(HitInfo info)
+    {
+        StartCoroutine(HitEffect(info));
+    }
+    IEnumerator HitEffect(HitInfo info)
+    {
+        hitEffectGO.transform.position = info.point;
+        Vector3 hitDirection = info.direction;
+        Utility.RotateTowards(info.point + hitDirection * 5f, hitEffectGO.transform);
+        hitEffectGO.SetActive(true);
+        hitEffectGO.transform.parent = null;
+        float timer = hitEffectDuration;
+        while (timer > 0f)
+        {
+            timer -= Time.fixedDeltaTime;
+            yield return new WaitForFixedUpdate();
+        }
+        hitEffectGO.transform.parent = transform;
+        hitEffectGO.SetActive(false);
     }
 
     private void OnDisable()
@@ -73,7 +100,9 @@ public class Player : MonoBehaviour
         input.Player.Dash.performed -= Dash_performed;
         input.Player.Attack.performed -= Attack_performed;
         health.OnDamaged -= Health_OnDamaged;
-        attackDownPrefab.GetComponent<AttackBox>().OnHit -= Player_OnHit;
+        attackDownPrefab.GetComponent<AttackBox>().OnHit -= Player_OnHitDown;
+        attackPrefab.GetComponent<AttackBox>().OnHit -= Player_OnHit;
+        attackUpPrefab.GetComponent<AttackBox>().OnHit -= Player_OnHit;
     }
 
     private bool wantToStopJump = false;
@@ -102,12 +131,12 @@ public class Player : MonoBehaviour
     private float beingAttackedTimer = 0f;
     private Vector2 knockBackDirection = Vector2.zero;
     private float invincibleTimer = 0f;
-    private void Health_OnDamaged(AttackBox attacker, Vector2 attackDir)
+    private void Health_OnDamaged(HitInfo info)
     {
         isBeingAttacked = true;
         beingAttackedTimer = 0f;
-        knockBackDirection = attackDir;
-        knockBackDirection.y = 0;
+        knockBackDirection = info.direction;
+        //knockBackDirection.y = 0;
         knockBackDirection.Normalize();
         spriteRenderer.material = getHitMaterial;
         invincibleTimer = invincibleDuration;
@@ -117,9 +146,11 @@ public class Player : MonoBehaviour
             isAttacking = false;
             currentAttackPrefab.SetActive(false);
             attackCoolDownTimer = attackCoolDown;
+            anim.Play("Idle");
         }
         if (isDashing)
         {
+            anim.Play("Idle");
             isDashing = false;
         }
         else
@@ -128,6 +159,7 @@ public class Player : MonoBehaviour
         }
         if (isJumping)
         {
+            anim.Play("Idle");
             isJumping = false;
             endJumpOnMin = false;
         }
@@ -211,13 +243,19 @@ public class Player : MonoBehaviour
         //Being Attacked
         if (isBeingAttacked)
         {
-            rb.velocity = knockBackDirection * attackKnockBackSpeed;
-            if (beingAttackedTimer >= attackKnockBackDuration)
+            if (beingAttackedTimer < attackKnockBackDuration)
             {
-                rb.velocity = Vector2.zero;
-                isBeingAttacked = false;
+                rb.velocity = knockBackDirection * attackKnockBackSpeed;
+            }
+            else if (beingAttackedTimer < attackKnockBackDuration + getHitDuration)
+            {
                 rb.gravityScale = savedGravity;
             }
+            else
+            {
+                isBeingAttacked = false;
+            }
+            anim.Play("Idle");
             beingAttackedTimer += Time.fixedDeltaTime;
         }
 
@@ -435,7 +473,7 @@ public class Player : MonoBehaviour
         }
         if (!isRunning && moveDir != 0)
         {
-            if (!isAttacking && !isJumping && isOnGround && !isDashing)
+            if (!isAttacking && !isJumping && isOnGround && !isDashing && !isBeingAttacked)
             {
                 isRunning = true;
                 anim.Play("Walk");

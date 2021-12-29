@@ -48,24 +48,32 @@ public class dwagon : MonoBehaviour
     public Transform[] fireballTargets = null;
     public Transform fireballSource;
     public float fireBallTimeToTarget = 1f;
-    public AnimationCurve fireBallCurve;
     public float waitAfterFireBallDuration = 0.3f;
-    public GameObject fireBallStub;
+    public float fireBallInitalYSpeedMin = 10f;
+    public float fireBallInitalYSpeedMax = 25f;
+    public float fireBallDestenationOffsetMax = 0.5f;
+    public int fireBallWaves = 3;
+    public float waitBetweenFireBallWavesDuration = 0.5f;
+
+    [Header("Getting Hit")]
+    public SpriteRenderer spriteRenderer;
+    public Material getHitMaterial;
+    public float invincibleDuration = 0.2f;
 
     private Rigidbody2D rb;
     private Health health;
     private Animator anim;
     private Animator shockWaveAnim;
-    private Animator fireBallStubAnim;
     private dwagonState state;
     private Transform target;
+    private Material normalMaterial;
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         health = GetComponent<Health>();
         anim = GetComponent<Animator>();
         shockWaveAnim = slamShockwave.GetComponent<Animator>();
-        fireBallStubAnim = fireBallStub.GetComponent<Animator>();
+        normalMaterial = spriteRenderer.material;
         GoToFlyingState();
     }
     private void Start()
@@ -87,17 +95,26 @@ public class dwagon : MonoBehaviour
     {
         health.OnDamaged -= Health_OnDamaged;
     }
-    private void Health_OnDamaged(AttackBox attacker, Vector2 attackDir)
+    private void Health_OnDamaged(HitInfo info)
     {
-        //stagerDone = false;
-        //recoilDone = false;
-        //state = bzState.gettingHit;
-        //recoilVelocity = attackDir * recoilSpeed;
-        //spriteRenderer.material = getHitMaterial;
-        //invincibleTimer = invincibleDuration;
-        //StartCoroutine(StaggerSequence());
-        //StartCoroutine(RecoilSequence());
+        StartCoroutine(GetHitSequence());
     }
+
+    IEnumerator GetHitSequence()
+    {
+        spriteRenderer.material = getHitMaterial;
+        health.SetCanHit(false);
+        float timer = invincibleDuration;
+        while (timer > 0)
+        {
+            timer -= Time.fixedDeltaTime;
+            yield return new WaitForFixedUpdate();
+        }
+        health.SetCanHit(true);
+        spriteRenderer.material = normalMaterial;
+
+    }
+
     private void FixedUpdate()
     {
         switch (state)
@@ -204,7 +221,7 @@ public class dwagon : MonoBehaviour
         Quaternion savedRotation = transform.rotation;
         transform.position += new Vector3(0, startYOffset, 0);
         endPosition += new Vector3(0, startYOffset, 0);
-        RotateTowards(endPosition);
+        Utility.RotateTowards(endPosition, transform);
         anim.Play("Slam");
         while (Vector3.Distance(transform.position, endPosition) > 0.3f)
         {
@@ -266,7 +283,7 @@ public class dwagon : MonoBehaviour
         slamPosition.x = Mathf.Clamp(slamPosition.x, flyPositionLeftRange.position.x, flyPositionRightRange.position.x);
         FacePosition(slamPosition);
         Quaternion savedRotation = transform.rotation;
-        RotateTowards(slamPosition);
+        Utility.RotateTowards(slamPosition, transform);
         anim.Play("Slam");
         while (Vector3.Distance(transform.position, slamPosition) > 0.3f)
         {
@@ -315,7 +332,6 @@ public class dwagon : MonoBehaviour
             else
             {
                 waitTimer = 999f;
-                shockWaveAnim.Play("Nothing");
                 slamShockwave.SetActive(false);
                 slamShockwave.transform.parent = transform;
                 slamShockwave.transform.localPosition = shockwavePosition;
@@ -342,18 +358,7 @@ public class dwagon : MonoBehaviour
         slamRoutine = null;
     }
 
-    private void RotateTowards(Vector3 targetPosition, Transform transformToMove = null)
-    {
-        if (transformToMove == null)
-        {
-            transformToMove = transform;
-        }
-        Vector3 lookDirection = targetPosition - transformToMove.position;
-        lookDirection.z = 0;
-        lookDirection.Normalize();
-        float rotationAngle = Vector3.SignedAngle(Vector3.up, lookDirection, Vector3.forward);
-        transformToMove.rotation = Quaternion.AngleAxis(rotationAngle, Vector3.forward);
-    }
+
 
     private void FireBallAttackState()
     {
@@ -385,35 +390,41 @@ public class dwagon : MonoBehaviour
             FaceVelocity();
             yield return new WaitForFixedUpdate();
         }
-        FacePosition(target.position);
-        float waitTimer = waitBeforeFireBallDuration;
+        FacePosition(flyPositionLeftRange.position);
+        float waitTimer = 0f;
         rb.velocity = Vector2.zero;
-        fireBallStub.SetActive(true);
-        fireBallStubAnim.Play("Spawn");
-        while (waitTimer > 0)
+        for (int j = 0; j < fireBallWaves; j++)
         {
-            waitTimer -= Time.fixedDeltaTime;
-            yield return new WaitForFixedUpdate();
+            GameObject[] fireBalls = new GameObject[fireballTargets.Length];
+            for (int i = 0; i < fireballTargets.Length; i++)
+            {
+                fireBalls[i] = Instantiate(fireBall, fireballSource.position, Quaternion.identity);
+                Vector3 destination = fireballTargets[i].position;
+                destination.x += Random.Range(-fireBallDestenationOffsetMax, fireBallDestenationOffsetMax);
+                Utility.RotateTowards(destination, fireBalls[i].transform);
+                Vector3 distance = destination - fireBalls[i].transform.position;
+                float initalYelocity = Random.Range(fireBallInitalYSpeedMin, fireBallInitalYSpeedMax + 5f);
+                fireBalls[i].GetComponent<Rigidbody2D>().velocity = Utility.CalcVelocity(distance, initalYelocity, fireBalls[i].GetComponent<Rigidbody2D>().gravityScale);
+            }
+            waitTimer = waitBetweenFireBallWavesDuration;
+            while (waitTimer > 0)
+            {
+                waitTimer -= Time.fixedDeltaTime;
+                yield return new WaitForFixedUpdate();
+            }
         }
-        GameObject[] fireBalls = new GameObject[fireballTargets.Length];
-        for (int i = 0; i < fireballTargets.Length; i++)
-        {
-            fireBalls[i] = Instantiate(fireBall, fireballSource.position, Quaternion.identity);
-            RotateTowards(fireballTargets[i].position, fireBalls[i].transform);
-        }
-        fireBallStub.SetActive(false);
         waitTimer = 0f;
         while (waitTimer < fireBallTimeToTarget)
         {
             waitTimer += Time.fixedDeltaTime;
-            for (int i = 0; i < fireballTargets.Length; i++)
-            {
-                if (fireBalls[i] == null) continue;
-                Vector3 fireBallPosition = Vector3.Lerp(fireballSource.position, fireballTargets[i].position, waitTimer / fireBallTimeToTarget);
-                float xlerp = fireBallCurve.Evaluate(waitTimer / fireBallTimeToTarget);
-                fireBallPosition.x = Mathf.Lerp(fireballSource.position.x, fireballTargets[i].position.x, xlerp);
-                fireBalls[i].transform.position = fireBallPosition;
-            }
+            //for (int i = 0; i < fireballTargets.Length; i++)
+            //{
+            //    if (fireBalls[i] == null) continue;
+            //    Vector3 fireBallPosition = Vector3.Lerp(fireballSource.position, fireballTargets[i].position, waitTimer / fireBallTimeToTarget);
+            //    float xlerp = fireBallCurve.Evaluate(waitTimer / fireBallTimeToTarget);
+            //    fireBallPosition.x = Mathf.Lerp(fireballSource.position.x, fireballTargets[i].position.x, xlerp);
+            //    fireBalls[i].transform.position = fireBallPosition;
+            //}
             yield return new WaitForFixedUpdate();
         }
         waitTimer = waitAfterFireBallDuration;

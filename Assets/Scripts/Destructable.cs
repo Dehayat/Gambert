@@ -20,7 +20,7 @@ public class Destructable : MonoBehaviour
         health.OnDamaged += OnDamaged;
     }
 
-    private void OnDamaged(AttackBox other,Vector2 attackDir)
+    private void OnDamaged(HitInfo info)
     {
         if (health.currentHealth == 0)
         {

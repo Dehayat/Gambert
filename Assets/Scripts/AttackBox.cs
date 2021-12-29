@@ -3,11 +3,19 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public struct HitInfo
+{
+    public AttackBox attacker;
+    public HitBox target;
+    public Vector2 direction;
+    public Vector3 point;
+}
+
+public delegate void Hit(HitInfo info);
 public class AttackBox : MonoBehaviour
 {
     public bool hitOnce = true;
 
-    public delegate void Hit(HitBox other);
     public event Hit OnHit;
 
     private Collider2D attackTrigger;
@@ -29,8 +37,13 @@ public class AttackBox : MonoBehaviour
             Vector2 hitBoxCenter = collision.bounds.center;
             Vector2 attackBoxCenter = attackTrigger.bounds.center;
             Vector2 attackDir = hitBoxCenter - attackBoxCenter;
-            target.Attack(this, attackDir.normalized);
-            OnHit?.Invoke(target);
+            HitInfo hitInfo;
+            hitInfo.attacker = this;
+            hitInfo.target = target;
+            hitInfo.direction = attackDir.normalized;
+            hitInfo.point = collision.ClosestPoint(attackTrigger.bounds.center);
+            target.Attack(hitInfo);
+            OnHit?.Invoke(hitInfo);
         }
     }
 

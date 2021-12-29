@@ -42,12 +42,12 @@ public class bz : MonoBehaviour
 
     private Vector2 recoilVelocity = Vector2.zero;
     private float invincibleTimer = 0f;
-    private void Health_OnDamaged(AttackBox attacker, Vector2 attackDir)
+    private void Health_OnDamaged(HitInfo info)
     {
         stagerDone = false;
         recoilDone = false;
         state = bzState.gettingHit;
-        recoilVelocity = attackDir * recoilSpeed;
+        recoilVelocity = info.direction * recoilSpeed;
         spriteRenderer.material = getHitMaterial;
         invincibleTimer = invincibleDuration;
         StartCoroutine(StaggerSequence());

@@ -6,6 +6,16 @@ public class FireBall : MonoBehaviour
 {
     public AttackBox attackBox;
 
+    private Rigidbody2D rb;
+    private void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+    }
+    private void FixedUpdate()
+    {
+        Utility.RotateTowards(transform.position + (Vector3)rb.velocity, transform);
+    }
+
     private void OnEnable()
     {
         attackBox.OnHit += AttackBox_OnHit;
@@ -15,7 +25,7 @@ public class FireBall : MonoBehaviour
         attackBox.OnHit -= AttackBox_OnHit;
     }
 
-    private void AttackBox_OnHit(HitBox other)
+    private void AttackBox_OnHit(HitInfo info)
     {
         Destroy(gameObject);
     }
