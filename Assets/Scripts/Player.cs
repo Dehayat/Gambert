@@ -25,6 +25,8 @@ public class Player : MonoBehaviour
     public SpriteRenderer spriteRenderer;
     public Material getHitMaterial;
     public float invincibleDuration = 0.3f;
+    public GameObject attackUpPrefab = null;
+    public GameObject attackDownPrefab = null;
 
     private Rigidbody2D rb;
     private BoxCollider2D boxCol;
@@ -101,7 +103,7 @@ public class Player : MonoBehaviour
         if (isAttacking)
         {
             isAttacking = false;
-            attackPrefab.SetActive(false);
+            currentAttackPrefab.SetActive(false);
             attackCoolDownTimer = attackCoolDown;
         }
         if (isDashing)
@@ -121,9 +123,11 @@ public class Player : MonoBehaviour
     }
 
     private int moveDir = 0;
+    private int lookYDir = 0;
     private void Update()
     {
         float moveDirFloat = input.Player.Move.ReadValue<float>();
+        float lookYDirFloat = input.Player.Look.ReadValue<float>();
         if (moveDirFloat > Mathf.Epsilon)
         {
             moveDir = 1;
@@ -143,6 +147,18 @@ public class Player : MonoBehaviour
         else
         {
             lookDir = facingDir;
+        }
+        if (lookYDirFloat > Mathf.Epsilon)
+        {
+            lookYDir = 1;
+        }
+        else if (lookYDirFloat < -Mathf.Epsilon)
+        {
+            lookYDir = -1;
+        }
+        else
+        {
+            lookYDir = 0;
         }
     }
     private bool isJumping = false;
@@ -170,6 +186,7 @@ public class Player : MonoBehaviour
     private bool preAttackDone = false;
     private bool attackDone = false;
     private bool isBeingAttacked = false;
+    private GameObject currentAttackPrefab = null;
 
     private void FixedUpdate()
     {
@@ -237,7 +254,21 @@ public class Player : MonoBehaviour
         //Attack
         if ((wantToAttack || attackBufferedTimer > Mathf.Epsilon) && !isBeingAttacked && !isAttacking && !isDashing && attackCoolDownTimer <= Mathf.Epsilon)
         {
-            anim.Play("Attack");
+            if (lookYDir == 1)
+            {
+                anim.Play("AttackUp");
+                currentAttackPrefab = attackUpPrefab;
+            }
+            else if (lookYDir == -1 && !isOnGround)
+            {
+                anim.Play("AttackDown");
+                currentAttackPrefab = attackDownPrefab;
+            }
+            else
+            {
+                currentAttackPrefab = attackPrefab;
+                anim.Play("Attack");
+            }
             isAttacking = true;
             attackTimer = 0f;
             attackBufferedTimer = 0;
@@ -264,7 +295,7 @@ public class Player : MonoBehaviour
                 if (!preAttackDone)
                 {
                     preAttackDone = true;
-                    attackPrefab.SetActive(true);
+                    currentAttackPrefab.SetActive(true);
                 }
             }
             else if (attackTimer >= preAttackLength + attackLength && attackTimer < preAttackLength + attackLength + postAttackLength)
@@ -272,12 +303,12 @@ public class Player : MonoBehaviour
                 if (!attackDone)
                 {
                     attackDone = true;
-                    attackPrefab.SetActive(false);
+                    currentAttackPrefab.SetActive(false);
                 }
             }
             else
             {
-                attackPrefab.SetActive(false);
+                currentAttackPrefab.SetActive(false);
                 isAttacking = false;
                 attackCoolDownTimer = attackCoolDown;
                 if (isJumping)
