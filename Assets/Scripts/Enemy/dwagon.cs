@@ -30,6 +30,7 @@ public class dwagon : MonoBehaviour
     public float waitBeforeGlideDuration = 1f;
     public float glideSpeed = 15f;
     public float waitAfterGlideDuration = 1.5f;
+    public float startYOffset = -0.8f;
 
     [Header("Slam Attack")]
     public float groundY = 0f;
@@ -200,6 +201,11 @@ public class dwagon : MonoBehaviour
             yield return new WaitForFixedUpdate();
         }
         rb.velocity = Vector2.zero;
+        Quaternion savedRotation = transform.rotation;
+        transform.position += new Vector3(0, startYOffset, 0);
+        endPosition += new Vector3(0, startYOffset, 0);
+        RotateTowards(endPosition);
+        anim.Play("Slam");
         while (Vector3.Distance(transform.position, endPosition) > 0.3f)
         {
             Vector3 moveDirection = endPosition - transform.position;
@@ -208,6 +214,8 @@ public class dwagon : MonoBehaviour
             FaceVelocity();
             yield return new WaitForFixedUpdate();
         }
+        transform.position -= new Vector3(0, startYOffset, 0);
+        transform.rotation = savedRotation;
         waitTimer = waitBeforeGlideDuration;
         anim.Play("Fly");
         startFloatPosition = transform.position;
@@ -259,6 +267,7 @@ public class dwagon : MonoBehaviour
         FacePosition(slamPosition);
         Quaternion savedRotation = transform.rotation;
         RotateTowards(slamPosition);
+        anim.Play("Slam");
         while (Vector3.Distance(transform.position, slamPosition) > 0.3f)
         {
             Vector3 moveDirection = slamPosition - transform.position;
@@ -266,6 +275,7 @@ public class dwagon : MonoBehaviour
             rb.velocity = moveVelocity;
             yield return new WaitForFixedUpdate();
         }
+        anim.Play("Fly");
         transform.rotation = savedRotation;
         waitTimer = shockWaveDuration;
         rb.velocity = Vector2.zero;
@@ -290,6 +300,7 @@ public class dwagon : MonoBehaviour
         waitTimer = shockWaveDuration;
         slamShockwave.SetActive(true);
         shockWaveAnim.Play("FlyAway");
+        anim.Play("Slam");
         Vector3 shockwavePosition = slamShockwave.transform.localPosition;
         slamShockwave.transform.parent = null;
         while (Vector3.Distance(transform.position, targetPosition) > 0.3f)
@@ -311,6 +322,7 @@ public class dwagon : MonoBehaviour
             }
             yield return new WaitForFixedUpdate();
         }
+        anim.Play("Fly");
         if (waitTimer > 0 && waitTimer <= shockWaveDuration + Mathf.Epsilon)
         {
             while (waitTimer > 0)

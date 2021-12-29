@@ -5621,6 +5621,7 @@ MonoBehaviour:
   waitBeforeGlideDuration: 0.3
   glideSpeed: 14
   waitAfterGlideDuration: 0.6
+  startYOffset: -0.8
   groundY: -2.37
   waitBeforeSlamDuration: 0.2
   slamShockwave: {fileID: 1987436564}
@@ -6425,7 +6426,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1987436565
 Transform:
   m_ObjectHideFlags: 0
