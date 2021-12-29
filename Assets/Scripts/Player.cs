@@ -33,6 +33,10 @@ public class Player : MonoBehaviour
     public float bounceDuration = 0.2f;
     public GameObject hitEffectGO;
     public float hitEffectDuration = 0.1f;
+    public float hitPauseDuration = 0.5f;
+    public ParticleSystem getHitEffectParticles;
+    public int maxRally = 1;
+    public float deadFloatUpSpeed = 2f;
 
     private Rigidbody2D rb;
     private BoxCollider2D boxCol;
@@ -74,6 +78,19 @@ public class Player : MonoBehaviour
     }
     private void Player_OnHit(HitInfo info)
     {
+        if (currentCanRally > 0)
+        {
+            health.currentHealth++;
+            currentCanRally--;
+            if (currentCanRally > maxRally)
+            {
+                currentCanRally = maxRally;
+            }
+            if (currentCanRally > health.maxHealth - health.currentHealth)
+            {
+                currentCanRally = health.maxHealth - health.currentHealth;
+            }
+        }
         StartCoroutine(HitEffect(info));
     }
     IEnumerator HitEffect(HitInfo info)
@@ -131,8 +148,35 @@ public class Player : MonoBehaviour
     private float beingAttackedTimer = 0f;
     private Vector2 knockBackDirection = Vector2.zero;
     private float invincibleTimer = 0f;
+    private int currentCanRally = 0;
+
+    private bool isDead = false;
     private void Health_OnDamaged(HitInfo info)
     {
+        if (health.currentHealth == 0)
+        {
+            rb.velocity = Vector2.up * deadFloatUpSpeed;
+            rb.isKinematic = true;
+            if (currentAttackPrefab != null)
+            {
+                currentAttackPrefab.SetActive(false);
+            }
+            isDead = true;
+            health.SetCanHit(false);
+            getHitEffectParticles.Play();
+            anim.Play("Dead");
+            return;
+        }
+
+        currentCanRally++;
+        if (currentCanRally > maxRally)
+        {
+            currentCanRally = maxRally;
+        }
+        if (currentCanRally > health.maxHealth - health.currentHealth)
+        {
+            currentCanRally = health.maxHealth - health.currentHealth;
+        }
         isBeingAttacked = true;
         beingAttackedTimer = 0f;
         knockBackDirection = info.direction;
@@ -168,12 +212,24 @@ public class Player : MonoBehaviour
             isBouncing = false;
         }
         rb.gravityScale = 0f;
+        StartCoroutine(PauseGameForHit());
+    }
+    IEnumerator PauseGameForHit()
+    {
+        Time.timeScale = 0f;
+        getHitEffectParticles.Play();
+        yield return new WaitForSecondsRealtime(hitPauseDuration);
+        Time.timeScale = 1f;
     }
 
     private int moveDir = 0;
     private int lookYDir = 0;
     private void Update()
     {
+        if (isDead)
+        {
+            return;
+        }
         float moveDirFloat = input.Player.Move.ReadValue<float>();
         float lookYDirFloat = input.Player.Look.ReadValue<float>();
         if (moveDirFloat > Mathf.Epsilon)
@@ -238,6 +294,10 @@ public class Player : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (isDead)
+        {
+            return;
+        }
         CheckIsOnGround();
 
         //Being Attacked
@@ -249,6 +309,7 @@ public class Player : MonoBehaviour
             }
             else if (beingAttackedTimer < attackKnockBackDuration + getHitDuration)
             {
+                rb.velocity = Vector2.zero;
                 rb.gravityScale = savedGravity;
             }
             else
