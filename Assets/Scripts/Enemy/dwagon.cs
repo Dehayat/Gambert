@@ -7,7 +7,8 @@ public class dwagon : MonoBehaviour
     {
         flying,
         glideAttack,
-        slamAttack
+        slamAttack,
+        FireBallAttack
     }
     public int facingDirection = 1;
     public float floatSpeed = 2f;
@@ -16,6 +17,12 @@ public class dwagon : MonoBehaviour
     public float normalFlySpeed = 4f;
     public Transform flyPositionLeftRange;
     public Transform flyPositionRightRange;
+    [Range(0f, 100f)]
+    public float GlideWeight = 40f;
+    [Range(0f, 100f)]
+    public float SlamWeight = 40f;
+    [Range(0f, 100f)]
+    public float FireWeight = 20f;
 
     [Header("Glide Attack")]
     public Transform glideRightPosition;
@@ -32,6 +39,15 @@ public class dwagon : MonoBehaviour
     public float waitAfterSlamDuration = 1f;
     public float slamSpeed = 18f;
     public float flyAwaySpeed = 18f;
+
+    [Header("FireBall Attack")]
+    public float waitBeforeFireBallDuration = 0.3f;
+    public GameObject fireBall;
+    public Transform[] fireballTargets = null;
+    public Transform fireballSource;
+    public float fireBallTimeToTarget = 1f;
+    public AnimationCurve fireBallCurve;
+    public float waitAfterFireBallDuration = 0.3f;
 
     private Rigidbody2D rb;
     private Health health;
@@ -86,6 +102,9 @@ public class dwagon : MonoBehaviour
             case dwagonState.slamAttack:
                 SlamAttackState();
                 break;
+            case dwagonState.FireBallAttack:
+                FireBallAttackState();
+                break;
             default:
                 break;
         }
@@ -96,6 +115,31 @@ public class dwagon : MonoBehaviour
     private float flyTimer = 0f;
     private void FlyingState()
     {
+        Float();
+        if (flyTimer > Mathf.Epsilon)
+        {
+            flyTimer -= Time.fixedDeltaTime;
+        }
+        else
+        {
+            float action = Random.Range(0f, GlideWeight + SlamWeight + FireWeight);
+            if (action < GlideWeight)
+            {
+                state = dwagonState.glideAttack;
+            }
+            else if (action < GlideWeight + SlamWeight)
+            {
+                state = dwagonState.slamAttack;
+            }
+            else
+            {
+                state = dwagonState.FireBallAttack;
+            }
+        }
+    }
+
+    private void Float()
+    {
         if (Vector3.Distance(transform.position, startFloatPosition) >= floatDistance)
         {
             startFloatPosition = transform.position;
@@ -103,14 +147,6 @@ public class dwagon : MonoBehaviour
         }
         rb.velocity = floatSpeed * floatDirection * Vector2.up;
 
-        if (flyTimer > Mathf.Epsilon)
-        {
-            flyTimer -= Time.fixedDeltaTime;
-        }
-        else
-        {
-            state = dwagonState.slamAttack;
-        }
     }
 
     private Coroutine glideRoutine = null;
@@ -151,7 +187,7 @@ public class dwagon : MonoBehaviour
         while (waitTimer > 0)
         {
             waitTimer -= Time.fixedDeltaTime;
-            FlyingState();
+            Float();
             yield return new WaitForFixedUpdate();
         }
         rb.velocity = Vector2.zero;
@@ -169,7 +205,7 @@ public class dwagon : MonoBehaviour
         while (waitTimer > 0)
         {
             waitTimer -= Time.fixedDeltaTime;
-            FlyingState();
+            Float();
             yield return new WaitForFixedUpdate();
         }
         Vector3 targetPosition = flyPositionLeftRange.position;
@@ -274,6 +310,76 @@ public class dwagon : MonoBehaviour
         GoToFlyingState();
         slamRoutine = null;
     }
+    private void FireBallAttackState()
+    {
+        if (fireBallRoutine == null)
+        {
+            fireBallRoutine = StartCoroutine(FireBallAttackSequence());
+        }
+    }
+
+    private Coroutine fireBallRoutine = null;
+    IEnumerator FireBallAttackSequence()
+    {
+        bool chooseRight = Random.Range(0f, 1f) < 0.5f;
+        chooseRight = true;
+        Vector3 startPosition;
+        if (chooseRight)
+        {
+            startPosition = flyPositionRightRange.position;
+        }
+        else
+        {
+            startPosition = flyPositionLeftRange.position;
+        }
+        while (Vector3.Distance(transform.position, startPosition) > 0.3f)
+        {
+            Vector3 moveDirection = startPosition - transform.position;
+            Vector2 moveVelocity = moveDirection.normalized * normalFlySpeed;
+            rb.velocity = moveVelocity;
+            FaceVelocity();
+            yield return new WaitForFixedUpdate();
+        }
+        FacePosition(target.position);
+        float waitTimer = waitBeforeFireBallDuration;
+        rb.velocity = Vector2.zero;
+        while (waitTimer > 0)
+        {
+            waitTimer -= Time.fixedDeltaTime;
+            yield return new WaitForFixedUpdate();
+        }
+        GameObject[] fireBalls = new GameObject[fireballTargets.Length];
+        for (int i = 0; i < fireballTargets.Length; i++)
+        {
+            fireBalls[i] = Instantiate(fireBall, fireballSource.position, Quaternion.identity);
+        }
+        waitTimer = 0f;
+        while (waitTimer < fireBallTimeToTarget)
+        {
+            waitTimer += Time.fixedDeltaTime;
+            for (int i = 0; i < fireballTargets.Length; i++)
+            {
+                if (fireBalls[i] == null) continue;
+                Vector3 fireBallPosition = Vector3.Lerp(transform.position, fireballTargets[i].position, waitTimer / fireBallTimeToTarget);
+                float xlerp = fireBallCurve.Evaluate(waitTimer / fireBallTimeToTarget);
+                fireBallPosition.x = Mathf.Lerp(transform.position.x, fireballTargets[i].position.x, xlerp);
+                fireBalls[i].transform.position = fireBallPosition;
+            }
+            yield return new WaitForFixedUpdate();
+        }
+        waitTimer = waitAfterFireBallDuration;
+        startFloatPosition = transform.position;
+        rb.velocity = Vector2.zero;
+        while (waitTimer > 0)
+        {
+            waitTimer -= Time.fixedDeltaTime;
+            Float();
+            yield return new WaitForFixedUpdate();
+        }
+        GoToFlyingState();
+        fireBallRoutine = null;
+    }
+
 
     private void GoToFlyingState()
     {

@@ -473,7 +473,6 @@ public class Player : MonoBehaviour
             isOnGround = false;
         }
     }
-#if UNITY_EDITOR
     private void OnDrawGizmos()
     {
         BoxCollider2D col = GetComponent<BoxCollider2D>();
@@ -482,5 +481,4 @@ public class Player : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireCube(origin, size);
     }
-#endif
 }
