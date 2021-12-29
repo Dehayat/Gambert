@@ -8,7 +8,8 @@ public class dwagon : MonoBehaviour
         flying,
         glideAttack,
         slamAttack,
-        FireBallAttack
+        FireBallAttack,
+        Dead,
     }
     public int facingDirection = 1;
     public float floatSpeed = 2f;
@@ -60,6 +61,10 @@ public class dwagon : MonoBehaviour
     public Material getHitMaterial;
     public float invincibleDuration = 0.2f;
 
+    [Header("Death")]
+    public GameObject deathEffect;
+    public float deathEffectDuration = 5f;
+
     private Rigidbody2D rb;
     private Health health;
     private Animator anim;
@@ -97,7 +102,50 @@ public class dwagon : MonoBehaviour
     }
     private void Health_OnDamaged(HitInfo info)
     {
-        StartCoroutine(GetHitSequence());
+        if (health.currentHealth == 0)
+        {
+            Die();
+        }
+        else
+        {
+            StartCoroutine(GetHitSequence());
+        }
+    }
+
+    private void Die()
+    {
+        StopAllCoroutines();
+        state = dwagonState.Dead;
+        health.SetCanHit(false);
+        anim.Play("Slam");
+        TurnOffAttackBoxes();
+        rb.velocity = Vector2.zero;
+        rb.isKinematic = true;
+        transform.rotation = Quaternion.identity;
+        StartCoroutine(DeathSequence());
+    }
+    IEnumerator DeathSequence()
+    {
+        deathEffect.SetActive(true);
+        float timer = deathEffectDuration;
+        while (timer > 0)
+        {
+            timer -= Time.fixedDeltaTime;
+            yield return new WaitForFixedUpdate();
+        }
+        deathEffect.SetActive(false);
+        rb.isKinematic = false;
+        anim.Play("Dead");
+        rb.gravityScale = 2;
+    }
+
+    private void TurnOffAttackBoxes()
+    {
+        var attackBoxes = GetComponentsInChildren<AttackBox>();
+        for (int i = 0; i < attackBoxes.Length; i++)
+        {
+            attackBoxes[i].enabled = false;
+        }
     }
 
     IEnumerator GetHitSequence()
@@ -272,6 +320,7 @@ public class dwagon : MonoBehaviour
     {
         float waitTimer = waitBeforeSlamDuration;
         rb.velocity = Vector2.zero;
+        anim.Play("Slam");
         while (waitTimer > 0)
         {
             waitTimer -= Time.fixedDeltaTime;
