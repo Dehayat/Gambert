@@ -3428,6 +3428,8 @@ MonoBehaviour:
   invincibleDuration: 0.8
   attackUpPrefab: {fileID: 957474389}
   attackDownPrefab: {fileID: 840304889}
+  bounceSpeed: 13
+  bounceDuration: 0.2
   wantToAttack: 0
 --- !u!114 &951047241
 MonoBehaviour:
@@ -5611,13 +5613,13 @@ MonoBehaviour:
   normalFlySpeed: 13
   flyPositionLeftRange: {fileID: 1855235784}
   flyPositionRightRange: {fileID: 1546117464}
-  GlideWeight: 0
+  GlideWeight: 100
   SlamWeight: 0
-  FireWeight: 100
+  FireWeight: 0
   glideRightPosition: {fileID: 1115889132}
   glideLeftPosition: {fileID: 300914907}
   waitBeforeGlideDuration: 0.3
-  glideSpeed: 16
+  glideSpeed: 14
   waitAfterGlideDuration: 0.6
   groundY: -2.37
   waitBeforeSlamDuration: 0.2

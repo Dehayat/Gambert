@@ -27,6 +27,8 @@ public class Player : MonoBehaviour
     public float invincibleDuration = 0.3f;
     public GameObject attackUpPrefab = null;
     public GameObject attackDownPrefab = null;
+    public float bounceSpeed = 10f;
+    public float bounceDuration = 0.2f;
 
     private Rigidbody2D rb;
     private BoxCollider2D boxCol;
@@ -53,6 +55,15 @@ public class Player : MonoBehaviour
         input.Player.Dash.performed += Dash_performed;
         input.Player.Attack.performed += Attack_performed;
         health.OnDamaged += Health_OnDamaged;
+        attackDownPrefab.GetComponent<AttackBox>().OnHit += Player_OnHit;
+    }
+
+    private bool isBouncing = false;
+    private float bounceTimer = 0f;
+    private void Player_OnHit(HitBox other)
+    {
+        isBouncing = true;
+        bounceTimer = bounceDuration;
     }
 
     private void OnDisable()
@@ -62,6 +73,7 @@ public class Player : MonoBehaviour
         input.Player.Dash.performed -= Dash_performed;
         input.Player.Attack.performed -= Attack_performed;
         health.OnDamaged -= Health_OnDamaged;
+        attackDownPrefab.GetComponent<AttackBox>().OnHit -= Player_OnHit;
     }
 
     private bool wantToStopJump = false;
@@ -118,6 +130,10 @@ public class Player : MonoBehaviour
         {
             isJumping = false;
             endJumpOnMin = false;
+        }
+        if (isBouncing)
+        {
+            isBouncing = false;
         }
         rb.gravityScale = 0f;
     }
@@ -223,6 +239,10 @@ public class Player : MonoBehaviour
             {
                 isJumping = false;
                 endJumpOnMin = false;
+            }
+            if (isBouncing)
+            {
+                isBouncing = false;
             }
         }
         else if (wantToDash)
@@ -381,6 +401,20 @@ public class Player : MonoBehaviour
                 rb.velocity = new Vector2(rb.velocity.x, jumpSpeed);
             }
         }
+        if (isBouncing)
+        {
+            rb.velocity = new Vector2(rb.velocity.x, bounceSpeed);
+            if (bounceTimer > 0f)
+            {
+                bounceTimer -= Time.fixedDeltaTime;
+            }
+            else
+            {
+                isBouncing = false;
+                rb.velocity = new Vector2(rb.velocity.x, 0f);
+            }
+        }
+
         //General
         if (invincibleTimer > 0)
         {
