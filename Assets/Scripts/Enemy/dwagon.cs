@@ -39,6 +39,7 @@ public class dwagon : MonoBehaviour
     public float waitAfterSlamDuration = 1f;
     public float slamSpeed = 18f;
     public float flyAwaySpeed = 18f;
+    public Transform dwagonBody;
 
     [Header("FireBall Attack")]
     public float waitBeforeFireBallDuration = 0.3f;
@@ -48,15 +49,22 @@ public class dwagon : MonoBehaviour
     public float fireBallTimeToTarget = 1f;
     public AnimationCurve fireBallCurve;
     public float waitAfterFireBallDuration = 0.3f;
+    public GameObject fireBallStub;
 
     private Rigidbody2D rb;
     private Health health;
+    private Animator anim;
+    private Animator shockWaveAnim;
+    private Animator fireBallStubAnim;
     private dwagonState state;
     private Transform target;
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         health = GetComponent<Health>();
+        anim = GetComponent<Animator>();
+        shockWaveAnim = slamShockwave.GetComponent<Animator>();
+        fireBallStubAnim = fireBallStub.GetComponent<Animator>();
         GoToFlyingState();
     }
     private void Start()
@@ -184,6 +192,7 @@ public class dwagon : MonoBehaviour
         startFloatPosition = transform.position;
         rb.velocity = Vector2.zero;
         FacePosition(endPosition);
+        anim.Play("Fly");
         while (waitTimer > 0)
         {
             waitTimer -= Time.fixedDeltaTime;
@@ -200,6 +209,7 @@ public class dwagon : MonoBehaviour
             yield return new WaitForFixedUpdate();
         }
         waitTimer = waitBeforeGlideDuration;
+        anim.Play("Fly");
         startFloatPosition = transform.position;
         rb.velocity = Vector2.zero;
         while (waitTimer > 0)
@@ -245,22 +255,28 @@ public class dwagon : MonoBehaviour
         }
         Vector3 slamPosition = target.position;
         slamPosition.y = groundY;
+        slamPosition.x = Mathf.Clamp(slamPosition.x, flyPositionLeftRange.position.x, flyPositionRightRange.position.x);
+        FacePosition(slamPosition);
+        Quaternion savedRotation = transform.rotation;
+        RotateTowards(slamPosition);
         while (Vector3.Distance(transform.position, slamPosition) > 0.3f)
         {
             Vector3 moveDirection = slamPosition - transform.position;
             Vector2 moveVelocity = moveDirection.normalized * slamSpeed;
             rb.velocity = moveVelocity;
-            FaceVelocity();
             yield return new WaitForFixedUpdate();
         }
+        transform.rotation = savedRotation;
         waitTimer = shockWaveDuration;
         rb.velocity = Vector2.zero;
         slamShockwave.SetActive(true);
+        shockWaveAnim.Play("Slam");
         while (waitTimer > 0)
         {
             waitTimer -= Time.fixedDeltaTime;
             yield return new WaitForFixedUpdate();
         }
+        shockWaveAnim.Play("Nothing");
         slamShockwave.SetActive(false);
         waitTimer = waitAfterSlamDuration;
         startFloatPosition = transform.position;
@@ -273,6 +289,7 @@ public class dwagon : MonoBehaviour
         targetPosition.x = transform.position.x;
         waitTimer = shockWaveDuration;
         slamShockwave.SetActive(true);
+        shockWaveAnim.Play("FlyAway");
         Vector3 shockwavePosition = slamShockwave.transform.localPosition;
         slamShockwave.transform.parent = null;
         while (Vector3.Distance(transform.position, targetPosition) > 0.3f)
@@ -287,6 +304,7 @@ public class dwagon : MonoBehaviour
             else
             {
                 waitTimer = 999f;
+                shockWaveAnim.Play("Nothing");
                 slamShockwave.SetActive(false);
                 slamShockwave.transform.parent = transform;
                 slamShockwave.transform.localPosition = shockwavePosition;
@@ -300,6 +318,7 @@ public class dwagon : MonoBehaviour
                 waitTimer -= Time.fixedDeltaTime;
                 yield return new WaitForFixedUpdate();
             }
+            shockWaveAnim.Play("Nothing");
             slamShockwave.SetActive(false);
             slamShockwave.transform.parent = transform;
             slamShockwave.transform.localPosition = shockwavePosition;
@@ -310,6 +329,20 @@ public class dwagon : MonoBehaviour
         GoToFlyingState();
         slamRoutine = null;
     }
+
+    private void RotateTowards(Vector3 targetPosition, Transform transformToMove = null)
+    {
+        if (transformToMove == null)
+        {
+            transformToMove = transform;
+        }
+        Vector3 lookDirection = targetPosition - transformToMove.position;
+        lookDirection.z = 0;
+        lookDirection.Normalize();
+        float rotationAngle = Vector3.SignedAngle(Vector3.up, lookDirection, Vector3.forward);
+        transformToMove.rotation = Quaternion.AngleAxis(rotationAngle, Vector3.forward);
+    }
+
     private void FireBallAttackState()
     {
         if (fireBallRoutine == null)
@@ -343,6 +376,8 @@ public class dwagon : MonoBehaviour
         FacePosition(target.position);
         float waitTimer = waitBeforeFireBallDuration;
         rb.velocity = Vector2.zero;
+        fireBallStub.SetActive(true);
+        fireBallStubAnim.Play("Spawn");
         while (waitTimer > 0)
         {
             waitTimer -= Time.fixedDeltaTime;
@@ -352,7 +387,9 @@ public class dwagon : MonoBehaviour
         for (int i = 0; i < fireballTargets.Length; i++)
         {
             fireBalls[i] = Instantiate(fireBall, fireballSource.position, Quaternion.identity);
+            RotateTowards(fireballTargets[i].position, fireBalls[i].transform);
         }
+        fireBallStub.SetActive(false);
         waitTimer = 0f;
         while (waitTimer < fireBallTimeToTarget)
         {
@@ -360,9 +397,9 @@ public class dwagon : MonoBehaviour
             for (int i = 0; i < fireballTargets.Length; i++)
             {
                 if (fireBalls[i] == null) continue;
-                Vector3 fireBallPosition = Vector3.Lerp(transform.position, fireballTargets[i].position, waitTimer / fireBallTimeToTarget);
+                Vector3 fireBallPosition = Vector3.Lerp(fireballSource.position, fireballTargets[i].position, waitTimer / fireBallTimeToTarget);
                 float xlerp = fireBallCurve.Evaluate(waitTimer / fireBallTimeToTarget);
-                fireBallPosition.x = Mathf.Lerp(transform.position.x, fireballTargets[i].position.x, xlerp);
+                fireBallPosition.x = Mathf.Lerp(fireballSource.position.x, fireballTargets[i].position.x, xlerp);
                 fireBalls[i].transform.position = fireBallPosition;
             }
             yield return new WaitForFixedUpdate();
@@ -370,6 +407,7 @@ public class dwagon : MonoBehaviour
         waitTimer = waitAfterFireBallDuration;
         startFloatPosition = transform.position;
         rb.velocity = Vector2.zero;
+        anim.Play("Fly");
         while (waitTimer > 0)
         {
             waitTimer -= Time.fixedDeltaTime;
@@ -386,6 +424,7 @@ public class dwagon : MonoBehaviour
         state = dwagonState.flying;
         flyTimer = flyDuration;
         startFloatPosition = transform.position;
+        anim.Play("Fly");
     }
 
     private void FacePosition(Vector3 target)
