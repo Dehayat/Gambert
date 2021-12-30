@@ -369,6 +369,7 @@ public class Player : MonoBehaviour
             }
             else
             {
+                rb.gravityScale = savedGravity;
                 isBeingAttacked = false;
             }
             anim.Play("Idle");

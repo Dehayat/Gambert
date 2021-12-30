@@ -63,7 +63,7 @@ public class dwagon : MonoBehaviour
     public float invincibleDuration = 0.2f;
 
     [Header("Death")]
-    public GameObject deathEffect;
+    public ParticleSystem deathEffect;
     public float deathEffectDuration = 5f;
 
     private Rigidbody2D rb;
@@ -129,14 +129,14 @@ public class dwagon : MonoBehaviour
     }
     IEnumerator DeathSequence()
     {
-        deathEffect.SetActive(true);
+        deathEffect.Play();
         float timer = deathEffectDuration;
         while (timer > 0)
         {
             timer -= Time.fixedDeltaTime;
             yield return new WaitForFixedUpdate();
         }
-        deathEffect.SetActive(false);
+        deathEffect.Stop();
         rb.isKinematic = false;
         anim.Play("Dead");
         rb.gravityScale = 2;
