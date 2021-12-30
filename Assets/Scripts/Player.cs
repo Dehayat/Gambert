@@ -38,6 +38,8 @@ public class Player : MonoBehaviour
     public int maxRally = 1;
     public float deadFloatUpSpeed = 2f;
     public PlayerUI playerUI;
+    public PlayerSound sound;
+    public float stepInterval = 0.15f;
 
     private Rigidbody2D rb;
     private BoxCollider2D boxCol;
@@ -106,8 +108,11 @@ public class Player : MonoBehaviour
     }
     private void Player_OnHit(HitInfo info)
     {
-        if (currentCanRally > 0)
+        sound.HitSomething();
+        var enemyRB = info.target.GetComponent<Collider2D>().attachedRigidbody;
+        if (enemyRB != null && enemyRB.CompareTag("Enemy") && currentCanRally > 0)
         {
+            sound.Rally();
             health.currentHealth++;
             currentCanRally--;
             playerUI.UpdateHealth(health.currentHealth, currentCanRally);
@@ -182,6 +187,7 @@ public class Player : MonoBehaviour
     private bool isDead = false;
     private void Health_OnDamaged(HitInfo info)
     {
+        sound.GetHit();
         if (health.currentHealth == 0)
         {
             rb.velocity = Vector2.up * deadFloatUpSpeed;
@@ -210,8 +216,16 @@ public class Player : MonoBehaviour
         isBeingAttacked = true;
         beingAttackedTimer = 0f;
         knockBackDirection = info.direction;
-        //knockBackDirection.y = 0;
-        knockBackDirection.Normalize();
+        knockBackDirection.y = 0.5f;
+        if (knockBackDirection.x > 0)
+        {
+            knockBackDirection.x = 1;
+        }
+        else
+        {
+            knockBackDirection.x = -1;
+        }
+        //knockBackDirection.Normalize();
         spriteRenderer.material = getHitMaterial;
         invincibleTimer = invincibleDuration;
         health.SetCanHit(false);
@@ -241,6 +255,14 @@ public class Player : MonoBehaviour
         if (isBouncing)
         {
             isBouncing = false;
+        }
+        if (isRunning)
+        {
+            isRunning = false;
+        }
+        if (isFalling)
+        {
+            isFalling = false;
         }
         rb.gravityScale = 0f;
         StartCoroutine(PauseGameForHit());
@@ -323,6 +345,7 @@ public class Player : MonoBehaviour
     private bool attackDone = false;
     private bool isBeingAttacked = false;
     private GameObject currentAttackPrefab = null;
+    private float stepTimer = 0f;
 
     private void FixedUpdate()
     {
@@ -355,6 +378,7 @@ public class Player : MonoBehaviour
         //Dash
         if ((wantToDash || dashBufferedTimer > Mathf.Epsilon) && !isBeingAttacked && !isDashing && !isAttacking && dashCoolDownTimer <= Mathf.Epsilon)
         {
+            sound.Dash();
             isDashing = true;
             dashTimer = 0;
             savedGravity = rb.gravityScale;
@@ -420,6 +444,7 @@ public class Player : MonoBehaviour
                 currentAttackPrefab = attackPrefab;
                 anim.Play("Attack");
             }
+            sound.Attack();
             isAttacking = true;
             attackTimer = 0f;
             attackBufferedTimer = 0;
@@ -491,6 +516,7 @@ public class Player : MonoBehaviour
                 endNextJumpOnMin = false;
                 endJumpOnMin = true;
             }
+            sound.Jump();
             jumpForgiveTimer = 0f;
             anim.Play("Jump");
             isJumping = true;
@@ -521,7 +547,7 @@ public class Player : MonoBehaviour
         if (isJumping)
         {
             jumpTimer += Time.fixedDeltaTime;
-            if (jumpTimer >= maxJumpLength || (jumpTimer >= minJumpLength && endJumpOnMin))
+            if (jumpTimer >= maxJumpLength || (jumpTimer >= minJumpLength && endJumpOnMin) || HasHitHead())
             {
                 endJumpOnMin = false;
                 rb.velocity = new Vector2(rb.velocity.x, 0);
@@ -570,11 +596,18 @@ public class Player : MonoBehaviour
             {
                 isRunning = true;
                 anim.Play("Walk");
+                stepTimer = stepInterval;
+                sound.Step();
             }
         }
         else if (moveDir == 0)
         {
             isRunning = false;
+        }
+
+        if (isFalling && isOnGround)
+        {
+            sound.Land();
         }
         if (!isRunning && !isDashing && !isAttacking && !isJumping && !isBeingAttacked)
         {
@@ -611,6 +644,19 @@ public class Player : MonoBehaviour
         }
         if (!isDashing && !isAttacking && !isBeingAttacked)
         {
+            if (isRunning)
+            {
+                if (stepTimer > 0f)
+                {
+                    stepTimer -= Time.fixedDeltaTime;
+                }
+                else
+                {
+                    stepTimer = stepInterval;
+                    sound.Step();
+                }
+            }
+
             if (facingDir != lookDir)
             {
                 Vector3 scale = transform.localScale;
@@ -649,12 +695,24 @@ public class Player : MonoBehaviour
         wantToAttack = false;
     }
 
+    private bool HasHitHead()
+    {
+        Vector2 origin = boxCol.bounds.center + (Vector3.up * (boxCol.bounds.extents.y * 0.75f));
+        Vector2 size = new Vector2(boxCol.bounds.size.x * 0.6f, boxCol.bounds.extents.y * 0.45f);
+        ContactFilter2D contactFilter = new ContactFilter2D();
+        contactFilter.NoFilter();
+        contactFilter.useTriggers = false;
+        contactFilter.SetLayerMask(groundLayer);
+        int collisionCount = Physics2D.OverlapBox(origin, size, 0, contactFilter, collisionResult);
+        return collisionCount != 0;
+    }
+
     private bool isOnGround = false;
     private Collider2D[] collisionResult = new Collider2D[1];
     private void CheckIsOnGround()
     {
         Vector2 origin = boxCol.bounds.center + (Vector3.down * (boxCol.bounds.extents.y * 0.75f));
-        Vector2 size = new Vector2(boxCol.bounds.size.x * 0.8f, boxCol.bounds.extents.y * 0.55f);
+        Vector2 size = new Vector2(boxCol.bounds.size.x * 0.8f, boxCol.bounds.extents.y * 0.75f);
         ContactFilter2D contactFilter = new ContactFilter2D();
         contactFilter.NoFilter();
         contactFilter.useTriggers = false;
@@ -673,8 +731,13 @@ public class Player : MonoBehaviour
     {
         BoxCollider2D col = GetComponent<BoxCollider2D>();
         Vector2 origin = col.bounds.center + (Vector3.down * (col.bounds.extents.y * 0.75f));
-        Vector2 size = new Vector2(col.bounds.size.x * 0.8f, col.bounds.extents.y * 0.55f);
+        Vector2 size = new Vector2(col.bounds.size.x * 0.8f, col.bounds.extents.y * 0.75f);
         Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(origin, size);
+
+        origin = col.bounds.center + (Vector3.up * (col.bounds.extents.y * 0.75f));
+        size = new Vector2(col.bounds.size.x * 0.6f, col.bounds.extents.y * 0.45f);
+        Gizmos.color = Color.blue;
         Gizmos.DrawWireCube(origin, size);
     }
 }

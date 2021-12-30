@@ -47,7 +47,16 @@ public class bz : MonoBehaviour
         stagerDone = false;
         recoilDone = false;
         state = bzState.gettingHit;
-        recoilVelocity = info.direction * recoilSpeed;
+        if (info.direction.x > 0)
+        {
+            recoilVelocity.x = 1;
+        }
+        else
+        {
+            recoilVelocity.x = -1;
+        }
+        recoilVelocity.y = 0.5f;
+        recoilVelocity *= recoilSpeed;
         spriteRenderer.material = getHitMaterial;
         invincibleTimer = invincibleDuration;
         StartCoroutine(StaggerSequence());
@@ -136,7 +145,7 @@ public class bz : MonoBehaviour
         directionBackToArea.z = 0;
         rb.velocity = directionBackToArea.normalized * wanderSpeed;
         FaceVelocity();
-        if (isInWanderArea && (directionBackToArea.magnitude < 1f))
+        if (isInWanderArea && (directionBackToArea.magnitude < 1f || Random.Range(0f, 1f) < 0.2f))
         {
             wanderDirection = new Vector2(directionBackToArea.x, 0);
             wanderDirection.Normalize();

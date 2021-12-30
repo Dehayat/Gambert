@@ -24,6 +24,7 @@ public class dwagon : MonoBehaviour
     public float SlamWeight = 40f;
     [Range(0f, 100f)]
     public float FireWeight = 20f;
+    public dwagonSound sound;
 
     [Header("Glide Attack")]
     public Transform glideRightPosition;
@@ -102,6 +103,7 @@ public class dwagon : MonoBehaviour
     }
     private void Health_OnDamaged(HitInfo info)
     {
+        sound.GetHit();
         if (health.currentHealth == 0)
         {
             Die();
@@ -114,6 +116,7 @@ public class dwagon : MonoBehaviour
 
     private void Die()
     {
+        sound.Die();
         StopAllCoroutines();
         state = dwagonState.Dead;
         health.SetCanHit(false);
@@ -271,6 +274,7 @@ public class dwagon : MonoBehaviour
         endPosition += new Vector3(0, startYOffset, 0);
         Utility.RotateTowards(endPosition, transform);
         anim.Play("Slam");
+        sound.Glide();
         while (Vector3.Distance(transform.position, endPosition) > 0.3f)
         {
             Vector3 moveDirection = endPosition - transform.position;
@@ -334,6 +338,7 @@ public class dwagon : MonoBehaviour
         Quaternion savedRotation = transform.rotation;
         Utility.RotateTowards(slamPosition, transform);
         anim.Play("Slam");
+        sound.Whoosh();
         while (Vector3.Distance(transform.position, slamPosition) > 0.3f)
         {
             Vector3 moveDirection = slamPosition - transform.position;
@@ -341,6 +346,7 @@ public class dwagon : MonoBehaviour
             rb.velocity = moveVelocity;
             yield return new WaitForFixedUpdate();
         }
+        sound.Slam();
         anim.Play("Fly");
         transform.rotation = savedRotation;
         waitTimer = shockWaveDuration;
@@ -455,6 +461,7 @@ public class dwagon : MonoBehaviour
                 float initalYelocity = Random.Range(fireBallInitalYSpeedMin, fireBallInitalYSpeedMax + 5f);
                 fireBalls[i].GetComponent<Rigidbody2D>().velocity = Utility.CalcVelocity(distance, initalYelocity, fireBalls[i].GetComponent<Rigidbody2D>().gravityScale);
             }
+            sound.FireBall();
             waitTimer = waitBetweenFireBallWavesDuration;
             while (waitTimer > 0)
             {
@@ -528,6 +535,14 @@ public class dwagon : MonoBehaviour
             Vector3 scale = transform.localScale;
             scale.x = -1;
             transform.localScale = scale;
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (state == dwagonState.Dead)
+        {
+            sound.Fall();
         }
     }
 }
