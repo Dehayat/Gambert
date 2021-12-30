@@ -144,7 +144,7 @@ public class dwagon : MonoBehaviour
         var attackBoxes = GetComponentsInChildren<AttackBox>();
         for (int i = 0; i < attackBoxes.Length; i++)
         {
-            attackBoxes[i].enabled = false;
+            attackBoxes[i].GetComponent<Collider2D>().enabled    = false;
         }
     }
 

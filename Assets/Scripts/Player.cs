@@ -37,6 +37,7 @@ public class Player : MonoBehaviour
     public ParticleSystem getHitEffectParticles;
     public int maxRally = 1;
     public float deadFloatUpSpeed = 2f;
+    public PlayerUI playerUI;
 
     private Rigidbody2D rb;
     private BoxCollider2D boxCol;
@@ -56,16 +57,43 @@ public class Player : MonoBehaviour
 
         input.Enable();
     }
+    private void Start()
+    {
+        playerUI.UpdateHealth(health.currentHealth, currentCanRally);
+    }
     private void OnEnable()
     {
         input.Player.Jump.performed += Jump_performed;
         input.Player.Jump.canceled += Jump_canceled;
         input.Player.Dash.performed += Dash_performed;
         input.Player.Attack.performed += Attack_performed;
+        input.Player.Pause.performed += Pause_performed; ;
         health.OnDamaged += Health_OnDamaged;
         attackDownPrefab.GetComponent<AttackBox>().OnHit += Player_OnHitDown;
         attackPrefab.GetComponent<AttackBox>().OnHit += Player_OnHit;
         attackUpPrefab.GetComponent<AttackBox>().OnHit += Player_OnHit;
+    }
+
+    private bool isPaused = false;
+    private float savedTimeScale = 0f;
+    private void Pause_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj)
+    {
+        if (isPaused)
+        {
+            var particlesMain = getHitEffectParticles.main;
+            particlesMain.useUnscaledTime = true;
+            isPaused = false;
+            Time.timeScale = savedTimeScale;
+        }
+        else
+        {
+            var particlesMain = getHitEffectParticles.main;
+            particlesMain.useUnscaledTime = false;
+            savedTimeScale = Time.timeScale;
+            Time.timeScale = 0f;
+            isPaused = true;
+        }
+        playerUI.Pause(isPaused);
     }
 
     private bool isBouncing = false;
@@ -82,6 +110,7 @@ public class Player : MonoBehaviour
         {
             health.currentHealth++;
             currentCanRally--;
+            playerUI.UpdateHealth(health.currentHealth, currentCanRally);
             if (currentCanRally > maxRally)
             {
                 currentCanRally = maxRally;
@@ -165,6 +194,7 @@ public class Player : MonoBehaviour
             health.SetCanHit(false);
             getHitEffectParticles.Play();
             anim.Play("Dead");
+            playerUI.UpdateHealth(health.currentHealth, 0);
             return;
         }
 
@@ -185,6 +215,7 @@ public class Player : MonoBehaviour
         spriteRenderer.material = getHitMaterial;
         invincibleTimer = invincibleDuration;
         health.SetCanHit(false);
+        playerUI.UpdateHealth(health.currentHealth, currentCanRally);
         if (isAttacking)
         {
             isAttacking = false;
@@ -219,6 +250,7 @@ public class Player : MonoBehaviour
         Time.timeScale = 0f;
         getHitEffectParticles.Play();
         yield return new WaitForSecondsRealtime(hitPauseDuration);
+        yield return new WaitWhile(() => isPaused);
         Time.timeScale = 1f;
     }
 
@@ -226,7 +258,7 @@ public class Player : MonoBehaviour
     private int lookYDir = 0;
     private void Update()
     {
-        if (isDead)
+        if (isDead || isPaused)
         {
             return;
         }

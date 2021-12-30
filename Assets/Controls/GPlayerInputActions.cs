@@ -57,6 +57,14 @@ public class @GPlayerInputActions : IInputActionCollection, IDisposable
                     ""expectedControlType"": ""Axis"",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""Pause"",
+                    ""type"": ""Button"",
+                    ""id"": ""ef1861b6-382b-43cd-ba7e-9ce5491aaed7"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -213,6 +221,28 @@ public class @GPlayerInputActions : IInputActionCollection, IDisposable
                     ""action"": ""Look"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""554517df-6403-4738-b6ff-3ce006a87303"",
+                    ""path"": ""<Gamepad>/start"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Gamepad"",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3b3cfd8c-e28a-4b4b-9619-b6dc3b735daa"",
+                    ""path"": ""<Keyboard>/p"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""Pause"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         },
@@ -793,6 +823,7 @@ public class @GPlayerInputActions : IInputActionCollection, IDisposable
         m_Player_Dash = m_Player.FindAction("Dash", throwIfNotFound: true);
         m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
         m_Player_Look = m_Player.FindAction("Look", throwIfNotFound: true);
+        m_Player_Pause = m_Player.FindAction("Pause", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -859,6 +890,7 @@ public class @GPlayerInputActions : IInputActionCollection, IDisposable
     private readonly InputAction m_Player_Dash;
     private readonly InputAction m_Player_Attack;
     private readonly InputAction m_Player_Look;
+    private readonly InputAction m_Player_Pause;
     public struct PlayerActions
     {
         private @GPlayerInputActions m_Wrapper;
@@ -868,6 +900,7 @@ public class @GPlayerInputActions : IInputActionCollection, IDisposable
         public InputAction @Dash => m_Wrapper.m_Player_Dash;
         public InputAction @Attack => m_Wrapper.m_Player_Attack;
         public InputAction @Look => m_Wrapper.m_Player_Look;
+        public InputAction @Pause => m_Wrapper.m_Player_Pause;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -892,6 +925,9 @@ public class @GPlayerInputActions : IInputActionCollection, IDisposable
                 @Look.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnLook;
                 @Look.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnLook;
                 @Look.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnLook;
+                @Pause.started -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPause;
+                @Pause.performed -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPause;
+                @Pause.canceled -= m_Wrapper.m_PlayerActionsCallbackInterface.OnPause;
             }
             m_Wrapper.m_PlayerActionsCallbackInterface = instance;
             if (instance != null)
@@ -911,6 +947,9 @@ public class @GPlayerInputActions : IInputActionCollection, IDisposable
                 @Look.started += instance.OnLook;
                 @Look.performed += instance.OnLook;
                 @Look.canceled += instance.OnLook;
+                @Pause.started += instance.OnPause;
+                @Pause.performed += instance.OnPause;
+                @Pause.canceled += instance.OnPause;
             }
         }
     }
@@ -1072,6 +1111,7 @@ public class @GPlayerInputActions : IInputActionCollection, IDisposable
         void OnDash(InputAction.CallbackContext context);
         void OnAttack(InputAction.CallbackContext context);
         void OnLook(InputAction.CallbackContext context);
+        void OnPause(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {
