@@ -14,7 +14,8 @@ public class dwagon : MonoBehaviour
     public int facingDirection = 1;
     public float floatSpeed = 2f;
     public float floatDistance = 0.5f;
-    public float flyDuration = 2f;
+    public float minFlyDuration = 1f;
+    public float maxFlyDuration = 2f;
     public float normalFlySpeed = 4f;
     public Transform flyPositionLeftRange;
     public Transform flyPositionRightRange;
@@ -147,7 +148,7 @@ public class dwagon : MonoBehaviour
         var attackBoxes = GetComponentsInChildren<AttackBox>();
         for (int i = 0; i < attackBoxes.Length; i++)
         {
-            attackBoxes[i].GetComponent<Collider2D>().enabled    = false;
+            attackBoxes[i].GetComponent<Collider2D>().enabled = false;
         }
     }
 
@@ -501,7 +502,7 @@ public class dwagon : MonoBehaviour
     private void GoToFlyingState()
     {
         state = dwagonState.flying;
-        flyTimer = flyDuration;
+        flyTimer = Random.Range(minFlyDuration, maxFlyDuration);
         startFloatPosition = transform.position;
         anim.Play("Fly");
     }

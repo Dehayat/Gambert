@@ -19,6 +19,7 @@ public class bz : MonoBehaviour
     public SpriteRenderer spriteRenderer;
     public Material getHitMaterial;
     public float invincibleDuration = 0.3f;
+    public ParticleSystem deathEffect;
 
     private Rigidbody2D rb;
     private Health health;
@@ -44,6 +45,13 @@ public class bz : MonoBehaviour
     private float invincibleTimer = 0f;
     private void Health_OnDamaged(HitInfo info)
     {
+        if (health.currentHealth == 0)
+        {
+            deathEffect.Play();
+            deathEffect.transform.parent = null;
+            Destroy(deathEffect, 1f);
+            Destroy(gameObject);
+        }
         stagerDone = false;
         recoilDone = false;
         state = bzState.gettingHit;
@@ -87,8 +95,14 @@ public class bz : MonoBehaviour
         recoilDone = true;
     }
 
+    public bool dieNow = false;
     private void FixedUpdate()
     {
+        if (dieNow)
+        {
+            health.currentHealth = 0;
+            Health_OnDamaged(default);
+        }
         switch (state)
         {
             case bzState.wandering:

@@ -10,6 +10,7 @@ public class PlayerSound : MonoBehaviour
     }
 
     public AudioClip step;
+    public AudioClip step2;
     public AudioClip jump;
     public AudioClip land;
     public AudioClip dash;
@@ -23,9 +24,20 @@ public class PlayerSound : MonoBehaviour
     {
         source = GetComponent<AudioSource>();
     }
+    private bool playStep2 = false;
     public void Step()
     {
-        source.PlayOneShot(step,source.volume);
+        source.pitch = Random.Range(0.8f, 1.2f);
+        if (playStep2)
+        {
+            source.PlayOneShot(step2, source.volume);
+        }
+        else
+        {
+            source.PlayOneShot(step, source.volume);
+        }
+        source.pitch = 1f;
+        playStep2 = !playStep2;
     }
     public void Jump()
     {
@@ -33,7 +45,7 @@ public class PlayerSound : MonoBehaviour
     }
     public void Land()
     {
-        source.PlayOneShot(land, source.volume+0.3f);
+        source.PlayOneShot(land, source.volume + 0.3f);
     }
     public void Dash()
     {
@@ -53,7 +65,7 @@ public class PlayerSound : MonoBehaviour
     }
     public void Rally()
     {
-        source.PlayOneShot(rally, source.volume-0.1f);
+        source.PlayOneShot(rally, source.volume - 0.1f);
     }
 
 }

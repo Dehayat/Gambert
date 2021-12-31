@@ -42,7 +42,7 @@ public class Player : MonoBehaviour
     public float stepInterval = 0.15f;
 
     private Rigidbody2D rb;
-    private BoxCollider2D boxCol;
+    private Collider2D boxCol;
     private GPlayerInputActions input;
     private Animator anim;
     private Health health;
@@ -51,7 +51,7 @@ public class Player : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        boxCol = GetComponent<BoxCollider2D>();
+        boxCol = GetComponent<Collider2D>();
         anim = GetComponent<Animator>();
         health = GetComponent<Health>();
         input = new GPlayerInputActions();
@@ -278,6 +278,8 @@ public class Player : MonoBehaviour
 
     private int moveDir = 0;
     private int lookYDir = 0;
+    private float lookPower = 0f;
+    private float movePower = 0f;
     private void Update()
     {
         if (isDead || isPaused)
@@ -285,7 +287,9 @@ public class Player : MonoBehaviour
             return;
         }
         float moveDirFloat = input.Player.Move.ReadValue<float>();
+        movePower = Mathf.Abs(moveDirFloat);
         float lookYDirFloat = input.Player.Look.ReadValue<float>();
+        lookPower = Mathf.Abs(lookYDirFloat);
         if (moveDirFloat > Mathf.Epsilon)
         {
             moveDir = 1;
@@ -430,12 +434,12 @@ public class Player : MonoBehaviour
         //Attack
         if ((wantToAttack || attackBufferedTimer > Mathf.Epsilon) && !isBeingAttacked && !isAttacking && !isDashing && attackCoolDownTimer <= Mathf.Epsilon)
         {
-            if (lookYDir == 1)
+            if (lookYDir == 1 && lookPower > movePower)
             {
                 anim.Play("AttackUp");
                 currentAttackPrefab = attackUpPrefab;
             }
-            else if (lookYDir == -1 && !isOnGround)
+            else if (lookYDir == -1 && lookPower > movePower && !isOnGround)
             {
                 anim.Play("AttackDown");
                 currentAttackPrefab = attackDownPrefab;
@@ -730,7 +734,7 @@ public class Player : MonoBehaviour
     }
     private void OnDrawGizmos()
     {
-        BoxCollider2D col = GetComponent<BoxCollider2D>();
+        Collider2D col = GetComponent<Collider2D>();
         Vector2 origin = col.bounds.center + (Vector3.down * (col.bounds.extents.y * 0.75f));
         Vector2 size = new Vector2(col.bounds.size.x * 0.8f, col.bounds.extents.y * 0.75f);
         Gizmos.color = Color.red;

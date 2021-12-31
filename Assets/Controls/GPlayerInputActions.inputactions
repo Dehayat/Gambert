@@ -170,7 +170,7 @@
                     "id": "398fbf4c-b4a2-4b72-9cb0-1d269f9a625d",
                     "path": "<Gamepad>/leftStick/y",
                     "interactions": "",
-                    "processors": "AxisDeadzone(min=0.45,max=0.8)",
+                    "processors": "AxisDeadzone(min=0.65,max=0.8)",
                     "groups": ";Gamepad",
                     "action": "Look",
                     "isComposite": false,
