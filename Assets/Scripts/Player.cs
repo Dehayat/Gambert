@@ -40,6 +40,8 @@ public class Player : MonoBehaviour
     public PlayerUI playerUI;
     public PlayerSound sound;
     public float stepInterval = 0.15f;
+    public float hazardDeathBlackScreenDuration = 0.3f;
+    public float gameOverWaitTime = 3f;
 
     private Rigidbody2D rb;
     private Collider2D boxCol;
@@ -183,7 +185,7 @@ public class Player : MonoBehaviour
     private Vector2 knockBackDirection = Vector2.zero;
     private float invincibleTimer = 0f;
     private int currentCanRally = 0;
-
+    private AttackBox hazard;
     private bool isDead = false;
     private void Health_OnDamaged(HitInfo info)
     {
@@ -201,6 +203,7 @@ public class Player : MonoBehaviour
             getHitEffectParticles.Play();
             anim.Play("Dead");
             playerUI.UpdateHealth(health.currentHealth, 0);
+            StartCoroutine(GameOver());
             return;
         }
 
@@ -265,15 +268,53 @@ public class Player : MonoBehaviour
             isFalling = false;
         }
         rb.gravityScale = 0f;
+
+        if (info.damageType == 1)
+        {
+            knockBackDirection = Vector2.zero;
+            hazard = info.attacker;
+        }
+        else
+        {
+            hazard = null;
+        }
         StartCoroutine(PauseGameForHit());
+    }
+
+    IEnumerator GameOver()
+    {
+        yield return new WaitForSeconds(gameOverWaitTime);
+        BlackScreen.instance.fadeDuration = 0.3f;
+        BlackScreen.instance.FadeToBlack();
+        yield return new WaitForSecondsRealtime(0.5f);
+        UnityEngine.SceneManagement.SceneManager.LoadSceneAsync("CharacterTest");
     }
     IEnumerator PauseGameForHit()
     {
+        if (hazard != null)
+        {
+            BlackScreen.instance.done += FadeDone;
+            BlackScreen.instance.fadeDuration = hazardDeathBlackScreenDuration;
+            BlackScreen.instance.FadeToBlack();
+        }
         Time.timeScale = 0f;
         getHitEffectParticles.Play();
         yield return new WaitForSecondsRealtime(hitPauseDuration);
         yield return new WaitWhile(() => isPaused);
+        if (hazard != null)
+        {
+            yield return new WaitUntil(() => fadeDone);
+            transform.position = hazard.GetComponentInParent<Hazard>().respawnPosition.position;
+            FindObjectOfType<FollowCamera>().SnapToTarget();
+            BlackScreen.instance.FadeFromBlack();
+        }
         Time.timeScale = 1f;
+
+    }
+    private bool fadeDone = false;
+    private void FadeDone()
+    {
+        fadeDone = true;
     }
 
     private int moveDir = 0;

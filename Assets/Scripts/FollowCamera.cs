@@ -185,4 +185,9 @@ public class FollowCamera : MonoBehaviour
         position.z = savedZ;
         transform.position = position;
     }
+
+    public void SnapToTarget()
+    {
+        transform.position = ClampPositionInZone(ClampPositionInLevel(target.position));
+    }
 }

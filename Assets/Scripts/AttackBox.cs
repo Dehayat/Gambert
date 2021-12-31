@@ -9,12 +9,14 @@ public struct HitInfo
     public HitBox target;
     public Vector2 direction;
     public Vector3 point;
+    public int damageType;
 }
 
 public delegate void Hit(HitInfo info);
 public class AttackBox : MonoBehaviour
 {
     public bool hitOnce = true;
+    public int damageType = 0;
 
     public event Hit OnHit;
 
@@ -37,11 +39,12 @@ public class AttackBox : MonoBehaviour
             Vector2 hitBoxCenter = collision.bounds.center;
             Vector2 attackBoxCenter = attackTrigger.bounds.center;
             Vector2 attackDir = hitBoxCenter - attackBoxCenter;
-            HitInfo hitInfo;
+            HitInfo hitInfo = default;
             hitInfo.attacker = this;
             hitInfo.target = target;
             hitInfo.direction = attackDir.normalized;
             hitInfo.point = collision.ClosestPoint(attackTrigger.bounds.center);
+            hitInfo.damageType = damageType;
             target.Attack(hitInfo);
             OnHit?.Invoke(hitInfo);
         }
