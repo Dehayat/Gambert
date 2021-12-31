@@ -26,6 +26,7 @@ public class dwagon : MonoBehaviour
     [Range(0f, 100f)]
     public float FireWeight = 20f;
     public dwagonSound sound;
+    public bool canAttack = false;
 
     [Header("Glide Attack")]
     public Transform glideRightPosition;
@@ -194,6 +195,7 @@ public class dwagon : MonoBehaviour
     private void FlyingState()
     {
         Float();
+        if (!canAttack) return;
         if (flyTimer > Mathf.Epsilon)
         {
             flyTimer -= Time.fixedDeltaTime;

@@ -18,9 +18,14 @@ public class SFX : MonoBehaviour
         sound.pitch += Random.Range(-0.3f, 0.3f);
         sound.PlayOneShot(fireBallImpact, 0.4f);
     }
+    public void SlamDoor()
+    {
+        sound.PlayOneShot(slamDoorSound, 0.8f);
+    }
 
     public AudioClip fireBallImpact;
     public float delayBetweenFireBalls = 0.1f;
+    public AudioClip slamDoorSound;
 
     private AudioSource sound;
     private void Awake()

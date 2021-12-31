@@ -120,7 +120,7 @@ public class FollowCamera : MonoBehaviour
         if (maxY > levelBounds.yMax)
         {
             maxY = levelBounds.yMax;
-            minY = minY - height;
+            minY = maxY - height;
         }
         if (minX < levelBounds.xMin)
         {
@@ -130,7 +130,7 @@ public class FollowCamera : MonoBehaviour
         if (maxX > levelBounds.xMax)
         {
             maxX = levelBounds.xMax;
-            minX = minX - width;
+            minX = maxX - width;
         }
         //minX = Mathf.Clamp(minX, levelBounds.xMin, levelBounds.xMax);
         //maxX = Mathf.Clamp(maxX, levelBounds.xMin, levelBounds.xMax);
