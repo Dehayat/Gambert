@@ -61,7 +61,7 @@ public class PlayerSound : MonoBehaviour
     }
     public void GetHit()
     {
-        source.PlayOneShot(getHit, source.volume);
+        source.PlayOneShot(getHit, source.volume+0.2f);
     }
     public void Rally()
     {

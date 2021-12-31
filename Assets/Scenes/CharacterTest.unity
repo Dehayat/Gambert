@@ -15281,7 +15281,7 @@ MonoBehaviour:
   dash: {fileID: 8300000, guid: 57f85600e0f93c74ebd65c9025e7d222, type: 3}
   attack: {fileID: 8300000, guid: 3f50e7ae328309b4cbda5bc3e7c72520, type: 3}
   hitSomething: {fileID: 0}
-  getHit: {fileID: 0}
+  getHit: {fileID: 8300000, guid: 3925a072be297bd49a3bc242dfcef800, type: 3}
   rally: {fileID: 8300000, guid: d769a5c828bce324d82d70a3dd4ab7d4, type: 3}
 --- !u!82 &1445541185
 AudioSource:
