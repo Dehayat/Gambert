@@ -52,13 +52,13 @@ public class FollowCamera : MonoBehaviour
     {
         targetRB = target.GetComponent<Rigidbody2D>();
         zones = new List<CameraZone>();
+        savedZ = transform.position.z;
     }
 
     private float savedZ;
     private Rect levelBounds;
     private void Start()
     {
-        savedZ = transform.position.z;
         currentOffset = targetOffset;
         levelBounds = FindObjectOfType<LevelBounds>().bounds;
         transform.position = ClampPositionInLevel(target.position);

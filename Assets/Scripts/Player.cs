@@ -106,6 +106,7 @@ public class Player : MonoBehaviour
     {
         isBouncing = true;
         bounceTimer = bounceDuration;
+        hasAirDashed = false;
         Player_OnHit(info);
     }
     private void Player_OnHit(HitInfo info)
@@ -391,7 +392,7 @@ public class Player : MonoBehaviour
     private bool isBeingAttacked = false;
     private GameObject currentAttackPrefab = null;
     private float stepTimer = 0f;
-
+    private bool hasAirDashed = false;
     private void FixedUpdate()
     {
         if (isDead)
@@ -422,8 +423,16 @@ public class Player : MonoBehaviour
         }
 
         //Dash
-        if ((wantToDash || dashBufferedTimer > Mathf.Epsilon) && !isBeingAttacked && !isDashing && !isAttacking && dashCoolDownTimer <= Mathf.Epsilon)
+        if (isOnGround && hasAirDashed)
         {
+            hasAirDashed = false;
+        }
+        if ((wantToDash || dashBufferedTimer > Mathf.Epsilon) && (isOnGround || !hasAirDashed) && !isBeingAttacked && !isDashing && !isAttacking && dashCoolDownTimer <= Mathf.Epsilon)
+        {
+            if (!isOnGround)
+            {
+                hasAirDashed = true;
+            }
             sound.Dash();
             isDashing = true;
             dashTimer = 0;
@@ -475,12 +484,12 @@ public class Player : MonoBehaviour
         //Attack
         if ((wantToAttack || attackBufferedTimer > Mathf.Epsilon) && !isBeingAttacked && !isAttacking && !isDashing && attackCoolDownTimer <= Mathf.Epsilon)
         {
-            if (lookYDir == 1 && lookPower > movePower)
+            if (lookYDir == 1 && lookPower >= movePower)
             {
                 anim.Play("AttackUp");
                 currentAttackPrefab = attackUpPrefab;
             }
-            else if (lookYDir == -1 && lookPower > movePower && !isOnGround)
+            else if (lookYDir == -1 && lookPower >= movePower && !isOnGround)
             {
                 anim.Play("AttackDown");
                 currentAttackPrefab = attackDownPrefab;
