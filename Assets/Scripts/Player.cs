@@ -42,6 +42,7 @@ public class Player : MonoBehaviour
     public float stepInterval = 0.15f;
     public float hazardDeathBlackScreenDuration = 0.3f;
     public float gameOverWaitTime = 3f;
+    public float rallyDuration = 3f;
 
     private Rigidbody2D rb;
     private Collider2D boxCol;
@@ -188,11 +189,16 @@ public class Player : MonoBehaviour
     private int currentCanRally = 0;
     private AttackBox hazard;
     private bool isDead = false;
+    private float rallyTimer = 0f;
     private void Health_OnDamaged(HitInfo info)
     {
         sound.GetHit();
         if (health.currentHealth == 0)
         {
+            var camShake = FindObjectOfType<CameraShake>();
+            camShake.shakePower = 0.5f;
+            camShake.timeScale = 0.5f;
+            camShake.Shake();
             rb.velocity = Vector2.up * deadFloatUpSpeed;
             rb.isKinematic = true;
             if (currentAttackPrefab != null)
@@ -204,6 +210,7 @@ public class Player : MonoBehaviour
             getHitEffectParticles.Play();
             anim.Play("Dead");
             playerUI.UpdateHealth(health.currentHealth, 0);
+            currentCanRally = 0;
             StartCoroutine(GameOver());
             return;
         }
@@ -217,6 +224,7 @@ public class Player : MonoBehaviour
         {
             currentCanRally = health.maxHealth - health.currentHealth;
         }
+        rallyTimer = rallyDuration;
         isBeingAttacked = true;
         beingAttackedTimer = 0f;
         knockBackDirection = info.direction;
@@ -278,6 +286,10 @@ public class Player : MonoBehaviour
         else
         {
             hazard = null;
+            var camShake = FindObjectOfType<CameraShake>();
+            camShake.shakePower = 0.25f;
+            camShake.timeScale = 0.6f;
+            camShake.Shake();
         }
         StartCoroutine(PauseGameForHit());
     }
@@ -637,6 +649,16 @@ public class Player : MonoBehaviour
                 health.SetCanHit(true);
             }
         }
+        if (rallyTimer > 0)
+        {
+            rallyTimer -= Time.fixedDeltaTime;
+            if (rallyTimer < Mathf.Epsilon)
+            {
+                rallyTimer = 0f;
+                currentCanRally = 0;
+                playerUI.UpdateHealth(health.currentHealth, 0);
+            }
+        }
         if (!isDashing && !isBeingAttacked && rb.velocity.y < -maxFallSpeed)
         {
             rb.velocity = new Vector2(rb.velocity.x, -maxFallSpeed);
@@ -662,6 +684,13 @@ public class Player : MonoBehaviour
 
         if (isFalling && isOnGround)
         {
+            if (rb.velocity.y < -19f)
+            {
+                var camShake = FindObjectOfType<CameraShake>();
+                camShake.shakePower = 0.1f;
+                camShake.timeScale = 1.2f;
+                camShake.Shake();
+            }
             sound.Land();
         }
         if (!isRunning && !isDashing && !isAttacking && !isJumping && !isBeingAttacked)

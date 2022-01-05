@@ -8,16 +8,19 @@ public class PlayerUI : MonoBehaviour
     public GameObject rallyIconPrefab;
     public GameObject healthContainer;
     public float healthLeftPadding = 50;
+    public GameObject breakEffect;
 
     public GameObject pauseIcon;
 
     private List<GameObject> healthIcons;
     private List<GameObject> rallyIcons;
+    private List<bool> activeHearts;
 
     private void Awake()
     {
         healthIcons = new List<GameObject>();
         rallyIcons = new List<GameObject>();
+        activeHearts = new List<bool>();
     }
 
     public void Pause(bool pause)
@@ -28,9 +31,11 @@ public class PlayerUI : MonoBehaviour
     public void UpdateHealth(int health, int rally)
     {
         int healthCount = healthIcons.Count;
+        bool playBreakAnim = false;
         for (int i = healthCount; i < health; i++)
         {
             healthIcons.Add(Instantiate(healthIconPrefab, healthContainer.transform));
+            activeHearts.Add(false);
         }
         int rallyCount = rallyIcons.Count;
         for (int i = rallyCount; i < rally; i++)
@@ -55,6 +60,18 @@ public class PlayerUI : MonoBehaviour
             icon.anchoredPosition = position;
             currentPosition += icon.rect.width + healthLeftPadding;
         }
+        for (int i = 0; i < healthIcons.Count; i++)
+        {
+            if (!healthIcons[i].activeSelf && activeHearts[i])
+            {
+                playBreakAnim = true;
+                breakEffect.GetComponent<RectTransform>().position = healthIcons[i].GetComponent<RectTransform>().position;
+            }
+        }
+        if (playBreakAnim)
+        {
+            breakEffect.GetComponent<Animator>().Play("Break");
+        }
         for (int i = 0; i < rally; i++)
         {
             rallyIcons[i].SetActive(true);
@@ -63,6 +80,10 @@ public class PlayerUI : MonoBehaviour
             position.x = currentPosition;
             icon.anchoredPosition = position;
             currentPosition += icon.rect.width + healthLeftPadding;
+        }
+        for (int i = 0; i < healthIcons.Count; i++)
+        {
+            activeHearts[i] = healthIcons[i].activeSelf;
         }
     }
 }

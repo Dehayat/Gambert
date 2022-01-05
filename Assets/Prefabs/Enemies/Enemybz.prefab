@@ -5015,6 +5015,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hitOnce: 1
+  damageType: 0
 --- !u!1 &8882495887497577720
 GameObject:
   m_ObjectHideFlags: 0
@@ -5263,6 +5264,7 @@ MonoBehaviour:
   getHitMaterial: {fileID: 2100000, guid: 83cc6d5d936aeea43813e1688703c8eb, type: 2}
   invincibleDuration: 0.4
   deathEffect: {fileID: 6762300933926852195}
+  dieNow: 0
 --- !u!95 &4412953047594623075
 Animator:
   serializedVersion: 3
