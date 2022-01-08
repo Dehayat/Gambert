@@ -43,14 +43,21 @@ public class bz : MonoBehaviour
 
     private Vector2 recoilVelocity = Vector2.zero;
     private float invincibleTimer = 0f;
+    private bool isDead = false;
     private void Health_OnDamaged(HitInfo info)
     {
+        if (isDead) return;
         if (health.currentHealth == 0)
         {
+            isDead = true;
             deathEffect.Play();
             deathEffect.transform.parent = null;
+            deathEffect.transform.localScale = new Vector3(1f, 1f, 1f);
+            SFX.instance.FlyDie();
             Destroy(deathEffect, 1f);
-            Destroy(gameObject);
+            Destroy(gameObject, 0.1f);
+            rb.velocity = Vector2.zero;
+            return;
         }
         stagerDone = false;
         recoilDone = false;
@@ -98,6 +105,10 @@ public class bz : MonoBehaviour
     public bool dieNow = false;
     private void FixedUpdate()
     {
+        if (isDead)
+        {
+            return;
+        }
         if (dieNow)
         {
             health.currentHealth = 0;

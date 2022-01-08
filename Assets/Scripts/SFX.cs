@@ -22,10 +22,15 @@ public class SFX : MonoBehaviour
     {
         sound.PlayOneShot(slamDoorSound, 0.8f);
     }
+    public void FlyDie()
+    {
+        sound.PlayOneShot(flyDead, 0.8f);
+    }
 
     public AudioClip fireBallImpact;
     public float delayBetweenFireBalls = 0.1f;
     public AudioClip slamDoorSound;
+    public AudioClip flyDead;
 
     private AudioSource sound;
     private void Awake()

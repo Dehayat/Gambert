@@ -7,8 +7,8 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: TransformMaterial
-  m_Shader: {fileID: -6465566751694194690, guid: f84eda7d11f7bca4b80c98a85717f694, type: 3}
+  m_Name: MidTintMat
+  m_Shader: {fileID: -6465566751694194690, guid: 0ec48adb7f788d14c987a5aa58eb82ec, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -19,16 +19,8 @@ Material:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
-    - Texture2D_5ee8af787c514c63bd5b18909737c5bd:
-        m_Texture: {fileID: 2800000, guid: 606e20ddd4318e44d99a4b33b48914d3, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - Texture2D_68593044199b4f44ab13dce54bc0c0fc:
-        m_Texture: {fileID: 2800000, guid: 6793112bab813f64dafc8e2bfa65c944, type: 3}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 614c018421de66a4a8f1f4af1214080b, type: 3}
+        m_Texture: {fileID: 2800000, guid: fe8a1ffd67c5dc9458b89ff380e2a33a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - unity_Lightmaps:
@@ -43,11 +35,7 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Floats:
-    - Vector1_2c28fa55f2dc4a0cafe1ae56fce5ba45: 7
-    - Vector1_a5b06c91eb634f6a9a9d1505d8136b24: 0.613
-    - Vector1_bcdaee2df93940f3b38de8d965ac11a5: 5
-    - Vector1_d4b1c05cfe7e4d5e88b5f1f4e3446704: 1
+    m_Floats: []
     m_Colors:
-    - Color_9347ee24a08c4bd89263789aa20b5e89: {r: 0.07098794, g: 1, b: 0, a: 0}
+    - Color_0ad0a68d59ba4f07ab8b76275228f5ac: {r: 0.066037714, g: 0.066037714, b: 0.066037714, a: 0}
   m_BuildTextureStacks: []

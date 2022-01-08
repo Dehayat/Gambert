@@ -43,6 +43,8 @@ public class Player : MonoBehaviour
     public float hazardDeathBlackScreenDuration = 0.3f;
     public float gameOverWaitTime = 3f;
     public float rallyDuration = 3f;
+    public ParticleSystem dashEffect;
+    public float deathParticleRate = 500f;
 
     private Rigidbody2D rb;
     private Collider2D boxCol;
@@ -207,11 +209,17 @@ public class Player : MonoBehaviour
             }
             isDead = true;
             health.SetCanHit(false);
+            var emmision = getHitEffectParticles.emission;
+            emmision.rateOverTime = new ParticleSystem.MinMaxCurve(deathParticleRate);
             getHitEffectParticles.Play();
             anim.Play("Dead");
             playerUI.UpdateHealth(health.currentHealth, 0);
             currentCanRally = 0;
             StartCoroutine(GameOver());
+            if (isDashing)
+            {
+                dashEffect.Stop();
+            }
             return;
         }
 
@@ -253,6 +261,7 @@ public class Player : MonoBehaviour
         {
             anim.Play("Idle");
             isDashing = false;
+            dashEffect.Stop();
         }
         else
         {
@@ -446,6 +455,7 @@ public class Player : MonoBehaviour
                 hasAirDashed = true;
             }
             sound.Dash();
+            dashEffect.Play();
             isDashing = true;
             dashTimer = 0;
             savedGravity = rb.gravityScale;
@@ -479,6 +489,7 @@ public class Player : MonoBehaviour
                 rb.velocity = Vector2.zero;
                 rb.gravityScale = savedGravity;
                 isDashing = false;
+                dashEffect.Stop();
             }
             else
             {
