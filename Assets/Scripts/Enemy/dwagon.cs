@@ -142,6 +142,8 @@ public class dwagon : MonoBehaviour
         rb.isKinematic = false;
         anim.Play("Dead");
         rb.gravityScale = 2;
+        yield return new WaitForSecondsRealtime(1.5f);
+        GameManager.gm.BeatBoss();
     }
 
     private void TurnOffAttackBoxes()

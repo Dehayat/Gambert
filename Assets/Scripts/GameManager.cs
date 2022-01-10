@@ -4,7 +4,20 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager gm;
+
+    public void BeatBoss()
+    {
+        beatBossUI.SetActive(true);
+    }
+
+    private void Awake()
+    {
+        gm = this;
+    }
+
     public GameObject player;
+    public GameObject beatBossUI;
 
     void Start()
     {

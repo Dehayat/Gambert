@@ -44,6 +44,7 @@ public class Player : MonoBehaviour
     public float gameOverWaitTime = 3f;
     public float rallyDuration = 3f;
     public ParticleSystem dashEffect;
+    public ParticleSystem dashEffect2;
     public float deathParticleRate = 500f;
 
     private Rigidbody2D rb;
@@ -218,7 +219,7 @@ public class Player : MonoBehaviour
             StartCoroutine(GameOver());
             if (isDashing)
             {
-                dashEffect.Stop();
+                dashEffect.Stop(); dashEffect2.Stop();
             }
             return;
         }
@@ -261,7 +262,7 @@ public class Player : MonoBehaviour
         {
             anim.Play("Idle");
             isDashing = false;
-            dashEffect.Stop();
+            dashEffect.Stop(); dashEffect2.Stop();
         }
         else
         {
@@ -455,7 +456,7 @@ public class Player : MonoBehaviour
                 hasAirDashed = true;
             }
             sound.Dash();
-            dashEffect.Play();
+            dashEffect.Play(); dashEffect2.Play();
             isDashing = true;
             dashTimer = 0;
             savedGravity = rb.gravityScale;
@@ -489,7 +490,7 @@ public class Player : MonoBehaviour
                 rb.velocity = Vector2.zero;
                 rb.gravityScale = savedGravity;
                 isDashing = false;
-                dashEffect.Stop();
+                dashEffect.Stop(); dashEffect2.Stop();
             }
             else
             {
